@@ -182,48 +182,83 @@
     </div>
 
     <script>
-        // Apps Script URL (여기에 실제 URL 입력)
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxqFUwh7rcpRN0VzFBeGaoLtpq1_g3nsAElA8kOj-fivyp7xZ2m6v7vl7z7xt7TDciF/exec';
+        // Apps Script URL
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzWqNe3VWw85p_Hyh559Z36HJ--raMcFTRGuerobC1UV8vROnlML63agL2JifYM2MtL/exec';
         
-        async function loadRoster() {
+        function loadRoster() {
             try {
-                const response = await fetch(`/api/get-roster`);
-                const result = await response.json();
+                // JSONP 콜백 함수 이름 생성
+                const callbackName = 'loadRosterCallback_' + Date.now();
                 
-                document.getElementById('loading').style.display = 'none';
+                // 콜백 함수 정의
+                window[callbackName] = function(result) {
+                    try {
+                        document.getElementById('loading').style.display = 'none';
+                        
+                        if (!result.ok) {
+                            throw new Error(result.error || '명단을 불러올 수 없습니다.');
+                        }
+                        
+                        if (!result.hasRoster) {
+                            document.getElementById('no-roster').style.display = 'block';
+                            return;
+                        }
+                        
+                        // 명단 정보 표시
+                        document.getElementById('course-title').textContent = result.course;
+                        
+                        let details = `이수일자: ${result.date}`;
+                        if (result.memo) {
+                            details += ` | ${result.memo}`;
+                        }
+                        document.getElementById('course-details').textContent = details;
+                        document.getElementById('person-count').textContent = result.count;
+                        
+                        // 참여자 목록 생성
+                        const namesGrid = document.getElementById('names-grid');
+                        namesGrid.innerHTML = '';
+                        
+                        result.names.forEach(name => {
+                            const link = document.createElement('a');
+                            link.href = `sign.html?name=${encodeURIComponent(name)}&course=${encodeURIComponent(result.course)}&date=${encodeURIComponent(result.date)}&memo=${encodeURIComponent(result.memo || '')}`;
+                            link.className = 'person-btn';
+                            link.textContent = name;
+                            namesGrid.appendChild(link);
+                        });
+                        
+                        document.getElementById('roster-content').style.display = 'block';
+                        
+                    } catch (error) {
+                        console.error('명단 처리 오류:', error);
+                        document.getElementById('loading').style.display = 'none';
+                        document.getElementById('error').style.display = 'block';
+                        document.getElementById('error').textContent = '명단을 처리하는 중 오류가 발생했습니다: ' + error.message;
+                    } finally {
+                        // 정리
+                        delete window[callbackName];
+                        if (script && script.parentNode) {
+                            document.head.removeChild(script);
+                        }
+                    }
+                };
                 
-                if (!result.ok) {
-                    throw new Error(result.error || '명단을 불러올 수 없습니다.');
-                }
+                // JSONP 스크립트 태그 생성 및 추가
+                const script = document.createElement('script');
+                script.src = `${APPS_SCRIPT_URL}?action=getRoster&callback=${callbackName}`;
                 
-                if (!result.hasRoster) {
-                    document.getElementById('no-roster').style.display = 'block';
-                    return;
-                }
+                // 스크립트 로드 오류 처리
+                script.onerror = function() {
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('error').style.display = 'block';
+                    document.getElementById('error').textContent = '서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.';
+                    
+                    delete window[callbackName];
+                    if (script.parentNode) {
+                        document.head.removeChild(script);
+                    }
+                };
                 
-                // 명단 정보 표시
-                document.getElementById('course-title').textContent = result.course;
-                
-                let details = `이수일자: ${result.date}`;
-                if (result.memo) {
-                    details += ` | ${result.memo}`;
-                }
-                document.getElementById('course-details').textContent = details;
-                document.getElementById('person-count').textContent = result.count;
-                
-                // 참여자 목록 생성
-                const namesGrid = document.getElementById('names-grid');
-                namesGrid.innerHTML = '';
-                
-                result.names.forEach(name => {
-                    const link = document.createElement('a');
-                    link.href = `sign.html?name=${encodeURIComponent(name)}&course=${encodeURIComponent(result.course)}&date=${encodeURIComponent(result.date)}&memo=${encodeURIComponent(result.memo || '')}`;
-                    link.className = 'person-btn';
-                    link.textContent = name;
-                    namesGrid.appendChild(link);
-                });
-                
-                document.getElementById('roster-content').style.display = 'block';
+                document.head.appendChild(script);
                 
             } catch (error) {
                 console.error('명단 로드 오류:', error);
@@ -238,4 +273,3 @@
     </script>
 </body>
 </html>
-
