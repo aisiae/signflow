@@ -140,4 +140,358 @@
         .loading-spinner {
             display: inline-block;
             width: 16px;
-            height: 16
+            height: 16px;
+            border: 2px solid var(--border);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .user-info {
+            background: #0f1320;
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 24px;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .user-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+        
+        .course-name {
+            color: var(--muted);
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-link">← 명단으로</a>
+    
+    <div class="container">
+        <div class="card">
+            <h1>교육 이수 확인 · 자필 서명</h1>
+            <p class="subtitle">정보를 확인하고 서명해주세요</p>
+            
+            <div id="userInfo" class="user-info" style="display: none;">
+                <div class="user-name" id="displayName"></div>
+                <div class="course-name" id="displayCourse"></div>
+            </div>
+            
+            <form id="signatureForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="name">이름 *</label>
+                        <input type="text" id="name" name="name" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">휴대폰 번호 *</label>
+                        <input type="tel" id="phone" name="phone" placeholder="010-1234-5678" required>
+                        <div class="help-text">숫자만 입력하거나 010-1234-5678 형식</div>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="course">교육명 *</label>
+                        <input type="text" id="course" name="course" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="date">이수일자 *</label>
+                        <input type="date" id="date" name="date" required>
+                        <div class="help-text">실제 이수한 날짜를 선택해주세요</div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>자필 서명 *</label>
+                    <canvas id="signaturePad" class="signature-pad"></canvas>
+                    <div class="signature-controls">
+                        <button type="button" id="clearBtn" class="btn">지우기</button>
+                        <span class="help-text">마우스나 터치로 서명해주세요</span>
+                    </div>
+                </div>
+                
+                <div class="checkbox-group">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" id="agree" required>
+                        <label for="agree">입력한 정보 및 서명 이미지를 교육 이수 확인 목적으로 수집·보관하는 것에 동의합니다.</label>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn primary" id="submitBtn">
+                    <span id="submitText">제출하기</span>
+                    <span id="submitSpinner" class="loading-spinner" style="display: none;"></span>
+                </button>
+                <div id="status" class="status"></div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Apps Script URL - 실제 배포된 URL 사용
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwCF-0ElelmDbyVNORz3Qjd9mHMC6N4UF2QGpeZ12BFZpu1mPFVdQHJUENsevsh2isXuA/exec';
+        
+        let signaturePad;
+        
+        function getUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                name: params.get('name') || '',
+                course: params.get('course') || '',
+                date: params.get('date') || '',
+                memo: params.get('memo') || '',
+                phone: params.get('phone') || ''
+            };
+        }
+        
+        function fillFormFromParams() {
+            const params = getUrlParams();
+            
+            if (params.name) {
+                document.getElementById('name').value = params.name;
+                document.getElementById('displayName').textContent = params.name + ' 님';
+                document.getElementById('userInfo').style.display = 'block';
+            }
+            
+            if (params.course) {
+                document.getElementById('course').value = params.course;
+                document.getElementById('displayCourse').textContent = params.course;
+            }
+            
+            if (params.phone) {
+                document.getElementById('phone').value = params.phone;
+            }
+            
+            // 이수일자는 기본값만 설정하고 사용자가 수정 가능
+            if (params.date) {
+                document.getElementById('date').value = params.date;
+            } else {
+                // 오늘 날짜를 기본값으로 설정
+                document.getElementById('date').value = new Date().toISOString().split('T')[0];
+            }
+        }
+        
+        function initSignaturePad() {
+            const canvas = document.getElementById('signaturePad');
+            
+            function resizeCanvas() {
+                const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                const rect = canvas.getBoundingClientRect();
+                canvas.width = rect.width * ratio;
+                canvas.height = rect.height * ratio;
+                canvas.getContext('2d').scale(ratio, ratio);
+                canvas.style.width = rect.width + 'px';
+                canvas.style.height = rect.height + 'px';
+            }
+            
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            
+            signaturePad = new SignaturePad(canvas, {
+                backgroundColor: 'rgba(255,255,255,0)',
+                penColor: '#ffffff',
+                minWidth: 1,
+                maxWidth: 3,
+                throttle: 16
+            });
+        }
+        
+        function showStatus(message, type = 'info') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+            statusEl.style.display = 'block';
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusEl.style.display = 'none';
+                }, 15000);
+            } else if (type === 'error') {
+                setTimeout(() => {
+                    statusEl.style.display = 'none';
+                }, 10000);
+            }
+        }
+        
+        function setLoading(isLoading) {
+            const btn = document.getElementById('submitBtn');
+            const text = document.getElementById('submitText');
+            const spinner = document.getElementById('submitSpinner');
+            
+            btn.disabled = isLoading;
+            
+            if (isLoading) {
+                text.style.display = 'none';
+                spinner.style.display = 'inline-block';
+            } else {
+                text.style.display = 'inline';
+                spinner.style.display = 'none';
+            }
+        }
+        
+        function validatePhone(phone) {
+            const cleanPhone = phone.replace(/\D/g, '');
+            return cleanPhone.length >= 10 && cleanPhone.length <= 11;
+        }
+        
+        function handleSubmit(e) {
+            e.preventDefault();
+            
+            // 서명 확인
+            if (signaturePad.isEmpty()) {
+                alert('서명을 입력해주세요.');
+                return;
+            }
+            
+            // 휴대폰 번호 검증
+            const phoneInput = document.getElementById('phone');
+            const phone = phoneInput.value.replace(/\D/g, '');
+            
+            if (!validatePhone(phoneInput.value)) {
+                alert('휴대폰 번호를 정확히 입력해주세요. (10-11자리 숫자)');
+                phoneInput.focus();
+                return;
+            }
+            
+            // 필수 필드 확인
+            const name = document.getElementById('name').value.trim();
+            const course = document.getElementById('course').value.trim();
+            const date = document.getElementById('date').value;
+            
+            if (!name || !course || !date) {
+                alert('모든 필수 정보를 입력해주세요.');
+                return;
+            }
+            
+            // 동의 확인
+            if (!document.getElementById('agree').checked) {
+                alert('개인정보 수집·이용에 동의해주세요.');
+                return;
+            }
+            
+            // 로딩 시작
+            setLoading(true);
+            showStatus('서명을 제출하는 중입니다...', 'info');
+            
+            // 제출 데이터 준비
+            const formData = {
+                name: name,
+                phone: phone,
+                course: course,
+                date: date,
+                memo: getUrlParams().memo || '',
+                signature: signaturePad.toDataURL('image/png'),
+                submittedAt: new Date().toISOString()
+            };
+            
+            console.log('제출 데이터:', { ...formData, signature: 'base64 data...' });
+            
+            // JSONP 콜백 함수 생성
+            const callbackName = 'submitSignatureCallback_' + Date.now();
+            
+            // 타임아웃 설정
+            const timeoutId = setTimeout(() => {
+                showStatus('서버 응답 시간이 초과되었습니다. 다시 시도해주세요.', 'error');
+                cleanup();
+            }, 60000); // 서명 제출은 더 긴 시간 허용
+            
+            // 정리 함수
+            function cleanup() {
+                clearTimeout(timeoutId);
+                delete window[callbackName];
+                const script = document.getElementById('submit-jsonp-script');
+                if (script && script.parentNode) {
+                    document.head.removeChild(script);
+                }
+                setLoading(false);
+            }
+            
+            // 콜백 함수 정의
+            window[callbackName] = function(result) {
+                console.log('서명 제출 응답:', result);
+                
+                try {
+                    if (result && result.ok) {
+                        showStatus('서명이 성공적으로 제출되었습니다! 5초 후 메인 페이지로 이동합니다.', 'success');
+                        
+                        // 폼 비활성화
+                        document.getElementById('signatureForm').style.pointerEvents = 'none';
+                        document.getElementById('signatureForm').style.opacity = '0.7';
+                        
+                        // 5초 후 메인 페이지로 이동
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 5000);
+                        
+                    } else {
+                        throw new Error(result?.error || '서명 제출에 실패했습니다.');
+                    }
+                } catch (error) {
+                    console.error('제출 오류:', error);
+                    showStatus('서명 제출에 실패했습니다: ' + error.message, 'error');
+                } finally {
+                    cleanup();
+                }
+            };
+            
+            // URL 길이 제한을 고려한 GET 요청 (서명 데이터가 클 수 있음)
+            // 실제로는 POST 방식이 더 적합하지만, CORS 문제로 GET 방식 사용
+            const params = new URLSearchParams({
+                action: 'submitSignature',
+                name: formData.name,
+                phone: formData.phone,
+                course: formData.course,
+                date: formData.date,
+                memo: formData.memo,
+                signature: formData.signature,
+                submittedAt: formData.submittedAt,
+                callback: callbackName,
+                _t: Date.now()
+            });
+            
+            const script = document.createElement('script');
+            script.id = 'submit-jsonp-script';
+            script.src = `${APPS_SCRIPT_URL}?${params.toString()}`;
+            
+            script.onerror = function() {
+                console.error('JSONP 제출 요청 실패');
+                showStatus('서버에 연결할 수 없습니다. 네트워크 연결을 확인하고 다시 시도해주세요.', 'error');
+                cleanup();
+            };
+            
+            document.head.appendChild(script);
+        }
+        
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('서명 페이지 로드 완료');
+            
+            fillFormFromParams();
+            initSignaturePad();
+            
+            // 이벤트 리스너 등록
+            document.getElementById('clearBtn').addEventListener('click', () => {
+                signaturePad.clear();
+            });
+            
+            document.getElementById('signatureForm').addEventListener('submit', handleSubmit);
+            
+            // 페이지를 떠날 때 경고 (서명 중인 경우)
+            window.addEventListener('beforeunload', function(e) {
+                if (!signaturePad.isEmpty()) {
+                    e.preventDefault();
+                    e.returnValue = '';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
