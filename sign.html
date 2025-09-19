@@ -161,7 +161,8 @@
                     </div>
                     <div class="form-group">
                         <label for="date">이수일자 *</label>
-                        <input type="date" id="date" name="date" readonly>
+                        <input type="date" id="date" name="date" required>
+                        <div class="help-text">실제 이수한 날짜를 선택해주세요</div>
                     </div>
                 </div>
                 
@@ -188,6 +189,9 @@
     </div>
 
     <script>
+        // Apps Script URL
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzWqNe3VWw85p_Hyh559Z36HJ--raMcFTRGuerobC1UV8vROnlML63agL2JifYM2MtL/exec';
+        
         function getUrlParams() {
             const params = new URLSearchParams(window.location.search);
             return {
@@ -203,8 +207,15 @@
             const params = getUrlParams();
             if (params.name) document.getElementById('name').value = params.name;
             if (params.course) document.getElementById('course').value = params.course;
-            if (params.date) document.getElementById('date').value = params.date;
             if (params.phone) document.getElementById('phone').value = params.phone;
+            
+            // 이수일자는 기본값만 설정하고 사용자가 수정 가능
+            if (params.date) {
+                document.getElementById('date').value = params.date;
+            } else {
+                // 오늘 날짜를 기본값으로 설정
+                document.getElementById('date').value = new Date().toISOString().split('T')[0];
+            }
         }
         
         let signaturePad;
@@ -241,7 +252,7 @@
             statusEl.style.display = 'block';
             
             if (type === 'success' || type === 'error') {
-                setTimeout(() => statusEl.style.display = 'none', 5000);
+                setTimeout(() => statusEl.style.display = 'none', 10000);
             }
         }
         
@@ -275,13 +286,18 @@
                     submittedAt: new Date().toISOString()
                 };
                 
-                const response = await fetch('/api/submit-signature', {
+                // Apps Script에 직접 POST 요청
+                const response = await fetch(APPS_SCRIPT_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify(formData)
                 });
+                
+                if (!response.ok) {
+                    throw new Error(`서버 응답 오류: ${response.status}`);
+                }
                 
                 const result = await response.json();
                 
@@ -296,7 +312,7 @@
                 
             } catch (error) {
                 console.error('제출 오류:', error);
-                showStatus('제출에 실패했습니다. 네트워크 연결을 확인해주세요: ' + error.message, 'error');
+                showStatus('제출에 실패했습니다: ' + error.message, 'error');
             } finally {
                 submitBtn.disabled = false;
             }
