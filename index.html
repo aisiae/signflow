@@ -307,3 +307,36 @@
             script.src = `${APPS_SCRIPT_URL}?action=getRoster&callback=${callbackName}&_t=${Date.now()}`;
             
             // 스크립트 로드 오류 처리
+            script.onerror = function() {
+                console.error('JSONP 스크립트 로드 실패');
+                showError('서버에 연결할 수 없습니다. 네트워크 연결을 확인하고 잠시 후 다시 시도해주세요.');
+                cleanup();
+            };
+            
+            console.log('JSONP 요청 URL:', script.src);
+            document.head.appendChild(script);
+        }
+        
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('error').textContent = message;
+        }
+        
+        // 페이지 로드 시 명단 불러오기
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('페이지 로드 완료, 명단 로딩 시작');
+            loadRoster();
+        });
+        
+        // 새로고침 버튼 추가 (선택사항)
+        function refreshRoster() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('roster-content').style.display = 'none';
+            document.getElementById('no-roster').style.display = 'none';
+            loadRoster();
+        }
+    </script>
+</body>
+</html>
