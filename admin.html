@@ -14,6 +14,7 @@
             --primary: #1d4ed8;
             --success: #10b981;
             --warning: #f59e0b;
+            --error: #ef4444;
         }
         
         * { box-sizing: border-box; }
@@ -54,6 +55,7 @@
             color: var(--ink);
             font-size: 16px;
             font-family: inherit;
+            transition: border-color 0.3s ease;
         }
         
         textarea { min-height: 150px; resize: vertical; }
@@ -83,7 +85,11 @@
         .btn.primary:hover { background: #1e40af; }
         .btn.success { border-color: var(--success); background: var(--success); color: black; }
         .btn.warning { border-color: var(--warning); background: var(--warning); color: black; }
-        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn:disabled { 
+            opacity: 0.6; 
+            cursor: not-allowed; 
+            transform: none !important;
+        }
         
         .status {
             padding: 12px 16px;
@@ -94,7 +100,7 @@
         }
         
         .status.success { background: rgba(16, 185, 129, 0.2); color: var(--success); border: 1px solid var(--success); }
-        .status.error { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; }
+        .status.error { background: rgba(239, 68, 68, 0.2); color: var(--error); border: 1px solid var(--error); }
         .status.info { background: rgba(29, 78, 216, 0.2); color: var(--primary); border: 1px solid var(--primary); }
         
         .back-link {
@@ -108,6 +114,7 @@
             border: 1px solid var(--border);
             border-radius: 6px;
             background: var(--card);
+            transition: all 0.3s ease;
         }
         
         .back-link:hover { color: var(--ink); border-color: var(--primary); }
@@ -139,6 +146,7 @@
             color: white;
             cursor: pointer;
             font-weight: 500;
+            transition: background 0.3s ease;
         }
         
         .copy-btn:hover { background: #1e40af; }
@@ -155,6 +163,20 @@
             font-weight: 600;
             color: var(--success);
             margin-bottom: 8px;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--border);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -175,7 +197,7 @@
                     <div class="form-group">
                         <label for="date">교육일정 *</label>
                         <input type="date" id="date" required>
-                        <div class="help-text">교육이 예정된 날짜를 선택해주세요 (참여자가 실제 이수일자를 별도 입력)</div>
+                        <div class="help-text">교육이 예정된 날짜를 선택해주세요</div>
                     </div>
                 </div>
                 
@@ -187,12 +209,15 @@
                 
                 <div class="form-group">
                     <label for="names">참여자 명단 *</label>
-                    <textarea id="names" placeholder="홍길동,김철수,이영희&#10;&#10;콤마(,)로 구분해서 입력해주세요" required></textarea>
-                    <div class="help-text">콤마(,)로 구분해서 입력하거나 한 줄에 한 명씩 입력해주세요</div>
+                    <textarea id="names" placeholder="홍길동,김철수,이영희&#10;또는&#10;홍길동&#10;김철수&#10;이영희&#10;&#10;콤마(,)로 구분하거나 한 줄에 한 명씩 입력해주세요" required></textarea>
+                    <div class="help-text">콤마(,)로 구분하거나 한 줄에 한 명씩 입력해주세요</div>
                 </div>
                 
                 <div style="text-align: center;">
-                    <button type="submit" class="btn primary" id="saveBtn">명단 등록하기</button>
+                    <button type="submit" class="btn primary" id="saveBtn">
+                        <span id="saveText">명단 등록하기</span>
+                        <span id="saveSpinner" class="loading-spinner" style="display: none;"></span>
+                    </button>
                     <button type="button" class="btn" id="clearBtn">초기화</button>
                     <button type="button" class="btn warning" id="pdfBtn">일괄 PDF 생성</button>
                 </div>
@@ -201,7 +226,7 @@
             </form>
             
             <div class="url-box">
-                <div class="main-url" id="mainUrl">메인 페이지 URL이 여기에 표시됩니다</div>
+                <div class="main-url" id="mainUrl"></div>
                 <button class="copy-btn" onclick="copyMainUrl()">메인 주소 복사</button>
                 <div class="help-text" style="margin-top: 12px;">
                     명단 등록 후 위 주소를 참여자들에게 공유하세요
@@ -231,19 +256,20 @@
     </div>
 
     <script>
-        // Apps Script URL (올바른 URL 사용)
+        // Apps Script URL - 실제 배포된 URL 사용
         const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwCF-0ElelmDbyVNORz3Qjd9mHMC6N4UF2QGpeZ12BFZpu1mPFVdQHJUENsevsh2isXuA/exec';
         
-        // 페이지 로드 시 메인 URL 설정
+        // 페이지 로드 시 설정
         document.addEventListener('DOMContentLoaded', function() {
             // 오늘 날짜를 기본값으로 설정
+            const today = new Date().toISOString().split('T')[0];
             if (!document.getElementById('date').value) {
-                document.getElementById('date').value = new Date().toISOString().split('T')[0];
+                document.getElementById('date').value = today;
             }
             
-            // 메인 URL 표시
-            const mainUrl = window.location.origin + '/';
-            document.getElementById('mainUrl').textContent = mainUrl;
+            // 메인 URL 표시 (실제 배포된 사이트 URL로 변경 필요)
+            const baseUrl = window.location.origin + window.location.pathname.replace('admin.html', 'index.html');
+            document.getElementById('mainUrl').textContent = baseUrl;
         });
         
         function showStatus(message, type = 'info') {
@@ -253,19 +279,42 @@
             statusEl.style.display = 'block';
             
             if (type === 'success' || type === 'error') {
-                setTimeout(() => statusEl.style.display = 'none', 5000);
+                setTimeout(() => {
+                    statusEl.style.display = 'none';
+                }, 8000);
+            }
+        }
+        
+        function hideStatus() {
+            const statusEl = document.getElementById('status');
+            statusEl.style.display = 'none';
+        }
+        
+        function setLoading(isLoading, buttonId = 'saveBtn') {
+            const btn = document.getElementById(buttonId);
+            const text = document.getElementById('saveText');
+            const spinner = document.getElementById('saveSpinner');
+            
+            btn.disabled = isLoading;
+            
+            if (isLoading) {
+                text.style.display = 'none';
+                spinner.style.display = 'inline-block';
+            } else {
+                text.style.display = 'inline';
+                spinner.style.display = 'none';
             }
         }
         
         function handleSubmit(e) {
             e.preventDefault();
-            const saveBtn = document.getElementById('saveBtn');
             
             const course = document.getElementById('course').value.trim();
             const date = document.getElementById('date').value;
             const memo = document.getElementById('memo').value.trim();
             const namesText = document.getElementById('names').value.trim();
             
+            // 입력값 검증
             if (!course || !date || !namesText) {
                 showStatus('교육명, 교육일정, 참여자 명단을 모두 입력해주세요.', 'error');
                 return;
@@ -280,54 +329,77 @@
             }
             
             if (names.length === 0) {
-                showStatus('참여자 명단을 입력해주세요.', 'error');
+                showStatus('올바른 참여자 명단을 입력해주세요.', 'error');
                 return;
             }
             
-            saveBtn.disabled = true;
+            // 로딩 시작
+            setLoading(true);
             showStatus('명단을 등록하는 중...', 'info');
             
-            // JSONP 방식으로 데이터 전송
-            const callbackName = 'handleSaveResult_' + Date.now();
+            // JSONP 콜백 함수 생성
+            const callbackName = 'saveRosterCallback_' + Date.now();
             
+            // 타임아웃 설정
+            const timeoutId = setTimeout(() => {
+                showStatus('서버 응답 시간이 초과되었습니다. 다시 시도해주세요.', 'error');
+                cleanup();
+            }, 30000);
+            
+            // 정리 함수
+            function cleanup() {
+                clearTimeout(timeoutId);
+                delete window[callbackName];
+                const script = document.getElementById('save-jsonp-script');
+                if (script && script.parentNode) {
+                    document.head.removeChild(script);
+                }
+                setLoading(false);
+            }
+            
+            // 콜백 함수 정의
             window[callbackName] = function(result) {
+                console.log('서버 응답:', result);
+                
                 try {
-                    if (result.ok) {
+                    if (result && result.ok) {
                         showStatus(`명단이 성공적으로 등록되었습니다! (${names.length}명)`, 'success');
+                        
+                        // 폼 일부 초기화 (명단만 클리어)
+                        document.getElementById('names').value = '';
+                        
                     } else {
-                        throw new Error(result.error || '명단 등록에 실패했습니다.');
+                        throw new Error(result?.error || '명단 등록에 실패했습니다.');
                     }
                 } catch (error) {
+                    console.error('등록 오류:', error);
                     showStatus('명단 등록에 실패했습니다: ' + error.message, 'error');
                 } finally {
-                    delete window[callbackName];
-                    if (script && script.parentNode) {
-                        document.head.removeChild(script);
-                    }
-                    saveBtn.disabled = false;
+                    cleanup();
                 }
             };
-
+            
+            // JSONP 요청 생성
             const params = new URLSearchParams({
                 action: 'saveRoster',
                 course: course,
                 date: date,
                 memo: memo,
                 names: names.join(','),
-                callback: callbackName
+                callback: callbackName,
+                _t: Date.now()
             });
-
+            
             const script = document.createElement('script');
+            script.id = 'save-jsonp-script';
             script.src = `${APPS_SCRIPT_URL}?${params.toString()}`;
+            
             script.onerror = function() {
-                showStatus('서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.', 'error');
-                delete window[callbackName];
-                if (script.parentNode) {
-                    document.head.removeChild(script);
-                }
-                saveBtn.disabled = false;
+                console.error('JSONP 요청 실패');
+                showStatus('서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요.', 'error');
+                cleanup();
             };
-
+            
             document.head.appendChild(script);
         }
         
@@ -336,31 +408,39 @@
             document.getElementById('date').value = new Date().toISOString().split('T')[0];
             document.getElementById('memo').value = '';
             document.getElementById('names').value = '';
-            
-            const statusEl = document.getElementById('status');
-            statusEl.style.display = 'none';
+            hideStatus();
         }
         
         function generatePDF() {
             const course = document.getElementById('course').value.trim();
             const date = document.getElementById('date').value;
             
-            if (!course || !date) {
-                showStatus('PDF 생성을 위해 교육명과 교육일정을 입력해주세요.', 'error');
+            if (!course && !date) {
+                showStatus('PDF 생성을 위해 교육명 또는 교육일정 중 하나는 입력해주세요.', 'error');
                 return;
             }
             
-            showStatus('PDF를 생성 중입니다...', 'info');
+            showStatus('PDF를 생성하는 중입니다...', 'info');
             
-            // Apps Script로 PDF 생성 요청
+            // PDF 생성 요청
             const params = new URLSearchParams({
                 action: 'pdf',
                 course: course,
-                date: date
+                date: date,
+                _t: Date.now()
             });
             
             const pdfUrl = `${APPS_SCRIPT_URL}?${params.toString()}`;
-            window.open(pdfUrl, '_blank');
+            
+            // 새 창에서 PDF 생성 페이지 열기
+            const newWindow = window.open(pdfUrl, '_blank');
+            
+            // 새 창이 차단된 경우 처리
+            if (!newWindow) {
+                showStatus('팝업이 차단되었습니다. 팝업 허용 후 다시 시도해주세요.', 'error');
+            } else {
+                showStatus('PDF 생성 페이지가 새 창에서 열렸습니다.', 'success');
+            }
         }
         
         function copyMainUrl() {
@@ -369,7 +449,7 @@
             if (navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(mainUrl).then(() => {
                     showStatus('메인 주소가 클립보드에 복사되었습니다.', 'success');
-                }).catch(err => {
+                }).catch(() => {
                     fallbackCopyTextToClipboard(mainUrl);
                 });
             } else {
@@ -380,9 +460,16 @@
         function fallbackCopyTextToClipboard(text) {
             const textArea = document.createElement('textarea');
             textArea.value = text;
+            textArea.style.position = 'fixed';
             textArea.style.top = '0';
             textArea.style.left = '0';
-            textArea.style.position = 'fixed';
+            textArea.style.width = '2em';
+            textArea.style.height = '2em';
+            textArea.style.padding = '0';
+            textArea.style.border = 'none';
+            textArea.style.outline = 'none';
+            textArea.style.boxShadow = 'none';
+            textArea.style.background = 'transparent';
             
             document.body.appendChild(textArea);
             textArea.focus();
@@ -402,13 +489,13 @@
             document.body.removeChild(textArea);
         }
         
-        // 이벤트 리스너
+        // 이벤트 리스너 등록
         document.getElementById('rosterForm').addEventListener('submit', handleSubmit);
         document.getElementById('clearBtn').addEventListener('click', clearForm);
         document.getElementById('pdfBtn').addEventListener('click', generatePDF);
         
+        // 전역 함수로 등록
         window.copyMainUrl = copyMainUrl;
     </script>
 </body>
 </html>
-
