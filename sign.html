@@ -394,6 +394,112 @@
             
             console.log('제출 데이터:', { ...formData, signature: 'base64 data...' });
             
+            // 먼저 POST 방식으로 시도
+            tryPostSubmission(formData)
+                .then(result => {
+                    if (result.ok) {
+                        showStatus('서명이 성공적으로 제출되었습니다! 5초 후 메인 페이지로 이동합니다.', 'success');
+                        
+                        // 폼 비활성화
+                        document.getElementById('signatureForm').style.pointerEvents = 'none';
+                        document.getElementById('signatureForm').style.opacity = '0.7';
+                        
+                        // 5초 후 메인 페이지로 이동
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 5000);
+                    } else {
+                        throw new Error(result.error || 'POST 방식 실패');
+                    }
+                })
+                .catch(postError => {
+                    console.log('POST 방식 실패, JSONP 방식으로 재시도:', postError);
+                    tryJsonpSubmission(formData);
+                });
+        }
+        
+        // POST 방식 시도
+        async function tryPostSubmission(formData) {
+            try {
+                const response = await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                throw error;
+            }
+        }
+        
+        // JSONP 방식 fallback
+        function tryJsonpSubmission(formData) {
+            // JSONP 콜백 함수 생성
+            const callbackName = 'submitSignatureCallback_' + Date.now();
+            
+            // 타임아웃 설정
+            const timeoutId = setTimeout(() => {
+                showStatus('서버 응답 시간이 초과되었습니다. 다시 시도해주세요.', 'error');
+                cleanup();
+            }, 60000);
+            
+            // 정리 함수
+            function cleanup() {
+                clearTimeout(timeoutId);
+                delete window[callbackName];
+                const script = document.getElementById('submit-jsonp-script');
+                if (script && script.parentNode) {
+                    document.head.removeChild(script);
+                }
+                setLoading(false);
+            }
+            
+            // 콜백 함수 정의
+            window[callbackName] = function(result) {
+                console.log('JSONP 서명 제출 응답:', result);
+                
+                try {
+                    if (result && result.ok) {
+                        showStatus('서명이 성공적으로 제출되었습니다! 5초 후 메인 페이지로 이동합니다.', 'success');
+                        
+                        // 폼 비활성화
+                        document.getElementById('signatureForm').style.pointerEvents = 'none';
+                        document.getElementById('signatureForm').style.opacity = '0.7';
+                        
+                        // 5초 후 메인 페이지로 이동
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 5000);
+                        
+                    } else {
+                        throw new Error(result?.error || '서명 제출에 실패했습니다.');
+                    }
+                } catch (error) {
+                    console.error('제출 오류:', error);
+                    showStatus('서명 제출에 실패했습니다: ' + error.message, 'error');
+                } finally {
+                    cleanup();
+                }
+            };
+            
+            // 서명 데이터가 너무 클 경우를 대비해 크기 확인
+            const signatureSize = formData.signature.length;
+            console.log('서명 데이터 크기:', signatureSize, 'characters');
+            
+            if (signatureSize > 8000) { // URL 길이 제한 고려
+                showStatus('서명 데이터가 너무 큽니다. 더 간단하게 서명해주세요.', 'error');
+                setLoading(false);
+                return;
+            }
+            
             // JSONP 콜백 함수 생성
             const callbackName = 'submitSignatureCallback_' + Date.now();
             
