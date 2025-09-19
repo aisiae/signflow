@@ -231,6 +231,9 @@
     </div>
 
     <script>
+        // Apps Script URL (올바른 URL 사용)
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxqFUwh7rcpRN0VzFBeGaoLtpq1_g3nsAElA8kOj-fivyp7xZ2m6v7vl7z7xt7TDciF/exec';
+        
         // 페이지 로드 시 메인 URL 설정
         document.addEventListener('DOMContentLoaded', function() {
             // 오늘 날짜를 기본값으로 설정
@@ -254,7 +257,7 @@
             }
         }
         
-        async function handleSubmit(e) {
+        function handleSubmit(e) {
             e.preventDefault();
             const saveBtn = document.getElementById('saveBtn');
             
@@ -264,7 +267,7 @@
             const namesText = document.getElementById('names').value.trim();
             
             if (!course || !date || !namesText) {
-                showStatus('교육명, 이수일자, 참여자 명단을 모두 입력해주세요.', 'error');
+                showStatus('교육명, 교육일정, 참여자 명단을 모두 입력해주세요.', 'error');
                 return;
             }
             
@@ -284,46 +287,48 @@
             saveBtn.disabled = true;
             showStatus('명단을 등록하는 중...', 'info');
             
-            try {
-const params = new URLSearchParams({
-    action: 'saveRoster',
-    course: course,
-    date: date,
-    memo: memo,
-    names: names.join(','),
-    callback: 'handleSaveResult'
-});
-
-const script = document.createElement('script');
-script.src = `https://script.google.com/macros/s/AKfycbz2M4NYz1Pozt4ZlCf1Ut8vZ7Yo3wTGO2FnE2qHxJ0C0nfVl6YgBZaWyjdgGHcRBYb-MA/exec?${params.toString()}`;
-
-window.handleSaveResult = function(result) {
-    if (result.ok) {
-        showStatus(`명단이 성공적으로 등록되었습니다! (${names.length}명)`, 'success');
-    } else {
-        throw new Error(result.error || '명단 등록에 실패했습니다.');
-    }
-    document.head.removeChild(script);
-    delete window.handleSaveResult;
-    saveBtn.disabled = false;
-};
-
-document.head.appendChild(script);
-return; // fetch 부분 실행 안되도록
-                
-                const result = await response.json();
-                
-                if (result.ok) {
-                    showStatus(`명단이 성공적으로 등록되었습니다! (${names.length}명)`, 'success');
-                } else {
-                    throw new Error(result.error || '명단 등록에 실패했습니다.');
+            // JSONP 방식으로 데이터 전송
+            const callbackName = 'handleSaveResult_' + Date.now();
+            
+            window[callbackName] = function(result) {
+                try {
+                    if (result.ok) {
+                        showStatus(`명단이 성공적으로 등록되었습니다! (${names.length}명)`, 'success');
+                    } else {
+                        throw new Error(result.error || '명단 등록에 실패했습니다.');
+                    }
+                } catch (error) {
+                    showStatus('명단 등록에 실패했습니다: ' + error.message, 'error');
+                } finally {
+                    delete window[callbackName];
+                    if (script && script.parentNode) {
+                        document.head.removeChild(script);
+                    }
+                    saveBtn.disabled = false;
                 }
-            } catch (error) {
-                console.error('명단 저장 오류:', error);
-                showStatus('명단 등록에 실패했습니다: ' + error.message, 'error');
-            } finally {
+            };
+
+            const params = new URLSearchParams({
+                action: 'saveRoster',
+                course: course,
+                date: date,
+                memo: memo,
+                names: names.join(','),
+                callback: callbackName
+            });
+
+            const script = document.createElement('script');
+            script.src = `${APPS_SCRIPT_URL}?${params.toString()}`;
+            script.onerror = function() {
+                showStatus('서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.', 'error');
+                delete window[callbackName];
+                if (script.parentNode) {
+                    document.head.removeChild(script);
+                }
                 saveBtn.disabled = false;
-            }
+            };
+
+            document.head.appendChild(script);
         }
         
         function clearForm() {
@@ -336,41 +341,26 @@ return; // fetch 부분 실행 안되도록
             statusEl.style.display = 'none';
         }
         
-        async function generatePDF() {
+        function generatePDF() {
             const course = document.getElementById('course').value.trim();
             const date = document.getElementById('date').value;
             
             if (!course || !date) {
-                showStatus('PDF 생성을 위해 교육명과 이수일자를 입력해주세요.', 'error');
+                showStatus('PDF 생성을 위해 교육명과 교육일정을 입력해주세요.', 'error');
                 return;
             }
             
             showStatus('PDF를 생성 중입니다...', 'info');
             
-            try {
-                const response = await fetch('/api/generate-pdf', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        course: course,
-                        date: date
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (result.ok) {
-                    showStatus('PDF 생성이 완료되었습니다!', 'success');
-                    window.open(result.pdfUrl, '_blank');
-                } else {
-                    throw new Error(result.error || 'PDF 생성에 실패했습니다.');
-                }
-            } catch (error) {
-                console.error('PDF 생성 오류:', error);
-                showStatus('PDF 생성에 실패했습니다: ' + error.message, 'error');
-            }
+            // Apps Script로 PDF 생성 요청
+            const params = new URLSearchParams({
+                action: 'pdf',
+                course: course,
+                date: date
+            });
+            
+            const pdfUrl = `${APPS_SCRIPT_URL}?${params.toString()}`;
+            window.open(pdfUrl, '_blank');
         }
         
         function copyMainUrl() {
@@ -421,6 +411,3 @@ return; // fetch 부분 실행 안되도록
     </script>
 </body>
 </html>
-
-
-
