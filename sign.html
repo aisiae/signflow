@@ -237,7 +237,7 @@
 
     <script>
         // Apps Script URL - 실제 배포된 URL 사용
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzbn0debjMZNG7jedaR6wAbsDqBDJWTewpURZiLIAdtMKlC6aciaC920j7x6tbtO_XHfA/exec';
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwCF-0ElelmDbyVNORz3Qjd9mHMC6N4UF2QGpeZ12BFZpu1mPFVdQHJUENsevsh2isXuA/exec';
         
         let signaturePad;
         
@@ -381,14 +381,14 @@
             setLoading(true);
             showStatus('서명을 제출하는 중입니다...', 'info');
             
-            // 제출 데이터 준비
+            // 제출 데이터 준비 (이미지 품질 최적화)
             const formData = {
                 name: name,
                 phone: phone,
                 course: course,
                 date: date,
                 memo: getUrlParams().memo || '',
-                signature: signaturePad.toDataURL('image/png'),
+                signature: signaturePad.toDataURL('image/jpeg', 0.5), // JPEG 형식, 50% 품질로 압축
                 submittedAt: new Date().toISOString()
             };
             
@@ -495,4 +495,3 @@
     </script>
 </body>
 </html>
-
