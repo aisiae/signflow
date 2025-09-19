@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>교육 이수 확인 · 자필 서명</title>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.2.0/dist/signature_pad.umd.min.js"></script>
+    <style>
+        :root {
+            --bg: #0b0d12;
+            --card: #121620;
+            --muted: #94a3b8;
+            --border: #233046;
+            --ink: #e5e7eb;
+            --primary: #1d4ed8;
+            --success: #10b981;
+            --error: #ef4444;
+        }
+        
+        * { box-sizing: border-box; }
+        
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--ink);
+            font: 16px/1.6 system-ui, -apple-system, 'Noto Sans KR', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container { max-width: 600px; width: 100%; }
+        
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+        
+        h1 { margin: 0 0 8px; color: var(--ink); text-align: center; }
+        .subtitle { color: var(--muted); text-align: center; margin-bottom: 32px; }
+        .form-group { margin-bottom: 20px; }
+        .form-row { display: grid; gap: 16px; grid-template-columns: 1fr 1fr; }
+        @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+        label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--ink); }
+        
+        input[type="text"], input[type="tel"], input[type="date"] {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: #0f1320;
+            color: var(--ink);
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        
+        input:focus { outline: none; border-color: var(--primary); }
+        input:read-only { background: #0a0f19; color: var(--muted); }
+        
+        .signature-pad {
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            width: 100%;
+            height: 200px;
+            background: #0a0f19;
+            cursor: crosshair;
+            touch-action: none;
+            transition: border-color 0.3s ease;
+        }
+        
+        .signature-pad:hover { border-color: var(--primary); }
+        .signature-controls { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
+        
+        .btn {
+            appearance: none;
+            border: 1px solid var(--border);
+            background: #101826;
+            color: var(--ink);
+            padding: 12px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn:hover { background: #1a2332; border-color: var(--primary); }
+        .btn.primary { border-color: #2563eb; background: var(--primary); }
+        .btn.primary:hover { background: #1e40af; }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        
+        .checkbox-group { margin: 24px 0; }
+        .checkbox-wrapper { display: flex; align-items: flex-start; gap: 12px; }
+        input[type="checkbox"] { margin-top: 4px; transform: scale(1.2); }
+        
+        .status {
+            margin-top: 16px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+            display: none;
+        }
+        
+        .status.success { background: rgba(16, 185, 129, 0.2); color: var(--success); border: 1px solid var(--success); }
+        .status.error { background: rgba(239, 68, 68, 0.2); color: var(--error); border: 1px solid var(--error); }
+        .status.info { background: rgba(29, 78, 216, 0.2); color: var(--primary); border: 1px solid var(--primary); }
+        
+        .help-text { font-size: 14px; color: var(--muted); margin-top: 4px; }
+        
+        .back-link {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 14px;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--card);
+        }
+        
+        .back-link:hover { color: var(--ink); border-color: var(--primary); }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-link">← 명단으로</a>
+    
+    <div class="container">
+        <div class="card">
+            <h1>교육 이수 확인 · 자필 서명</h1>
+            <p class="subtitle">정보를 입력하고 서명해주세요</p>
+            
+            <form id="signatureForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="name">이름 *</label>
+                        <input type="text" id="name" name="name" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">휴대폰 번호 *</label>
+                        <input type="tel" id="phone" name="phone" placeholder="010-1234-5678" required>
+                        <div class="help-text">숫자만 입력하거나 010-1234-5678 형식</div>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="course">교육명 *</label>
+                        <input type="text" id="course" name="course" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="date">이수일자 *</label>
+                        <input type="date" id="date" name="date" readonly>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>자필 서명 *</label>
+                    <canvas id="signaturePad" class="signature-pad"></canvas>
+                    <div class="signature-controls">
+                        <button type="button" id="clearBtn" class="btn">지우기</button>
+                        <span class="help-text">마우스나 터치로 서명해주세요</span>
+                    </div>
+                </div>
+                
+                <div class="checkbox-group">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" id="agree" required>
+                        <label for="agree">입력한 정보 및 서명 이미지를 교육 이수 확인 목적으로 수집·보관하는 것에 동의합니다.</label>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn primary" id="submitBtn">제출하기</button>
+                <div id="status" class="status"></div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function getUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                name: params.get('name') || '',
+                course: params.get('course') || '',
+                date: params.get('date') || '',
+                memo: params.get('memo') || '',
+                phone: params.get('phone') || ''
+            };
+        }
+        
+        function fillFormFromParams() {
+            const params = getUrlParams();
+            if (params.name) document.getElementById('name').value = params.name;
+            if (params.course) document.getElementById('course').value = params.course;
+            if (params.date) document.getElementById('date').value = params.date;
+            if (params.phone) document.getElementById('phone').value = params.phone;
+        }
+        
+        let signaturePad;
+        
+        function initSignaturePad() {
+            const canvas = document.getElementById('signaturePad');
+            
+            function resizeCanvas() {
+                const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                const rect = canvas.getBoundingClientRect();
+                canvas.width = rect.width * ratio;
+                canvas.height = rect.height * ratio;
+                canvas.getContext('2d').scale(ratio, ratio);
+                canvas.style.width = rect.width + 'px';
+                canvas.style.height = rect.height + 'px';
+            }
+            
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            
+            signaturePad = new SignaturePad(canvas, {
+                backgroundColor: 'rgba(255,255,255,0)',
+                penColor: '#ffffff',
+                minWidth: 1,
+                maxWidth: 3,
+                throttle: 16
+            });
+        }
+        
+        function showStatus(message, type = 'info') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+            statusEl.style.display = 'block';
+            
+            if (type === 'success' || type === 'error') {
+                setTimeout(() => statusEl.style.display = 'none', 5000);
+            }
+        }
+        
+        async function handleSubmit(e) {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            
+            if (signaturePad.isEmpty()) {
+                alert('서명을 입력해주세요.');
+                return;
+            }
+            
+            const phone = document.getElementById('phone').value.replace(/\D/g, '');
+            if (phone.length < 10 || phone.length > 11) {
+                alert('휴대폰 번호를 정확히 입력해주세요.');
+                document.getElementById('phone').focus();
+                return;
+            }
+            
+            submitBtn.disabled = true;
+            showStatus('제출 중입니다...', 'info');
+            
+            try {
+                const formData = {
+                    name: document.getElementById('name').value.trim(),
+                    phone: phone,
+                    course: document.getElementById('course').value.trim(),
+                    date: document.getElementById('date').value,
+                    memo: getUrlParams().memo || '',
+                    signature: signaturePad.toDataURL('image/png'),
+                    submittedAt: new Date().toISOString()
+                };
+                
+                const response = await fetch('/api/submit-signature', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.ok) {
+                    showStatus('제출이 완료되었습니다! 3초 후 메인 페이지로 이동합니다.', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 3000);
+                } else {
+                    throw new Error(result.error || '서버 오류가 발생했습니다.');
+                }
+                
+            } catch (error) {
+                console.error('제출 오류:', error);
+                showStatus('제출에 실패했습니다. 네트워크 연결을 확인해주세요: ' + error.message, 'error');
+            } finally {
+                submitBtn.disabled = false;
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            fillFormFromParams();
+            initSignaturePad();
+            
+            document.getElementById('clearBtn').addEventListener('click', () => signaturePad.clear());
+            document.getElementById('signatureForm').addEventListener('submit', handleSubmit);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>교육 이수 확인 시스템</title>
+    <style>
+        :root {
+            --bg: #0b0d12;
+            --card: #121620;
+            --muted: #94a3b8;
+            --border: #233046;
+            --ink: #e5e7eb;
+            --primary: #1d4ed8;
+            --success: #10b981;
+        }
+        
+        * { box-sizing: border-box; }
+        
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--ink);
+            font: 16px/1.6 system-ui, -apple-system, 'Noto Sans KR', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container { max-width: 800px; width: 100%; }
+        
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+        
+        .course-info {
+            background: #0f1320;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .course-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+        
+        .course-details {
+            color: var(--muted);
+            font-size: 16px;
+        }
+        
+        .person-btn {
+            display: inline-block;
+            background: #1a2332;
+            border: 1px solid var(--border);
+            color: var(--ink);
+            padding: 12px 20px;
+            margin: 6px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .person-btn:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+        
+        .admin-link {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 8px 12px;
+            border-radius: 6px;
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 14px;
+        }
+        
+        .admin-link:hover {
+            color: var(--ink);
+            border-color: var(--primary);
+        }
+        
+        .loading {
+            text-align: center;
+            color: var(--muted);
+        }
+        
+        .error {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid #ef4444;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .no-roster {
+            text-align: center;
+            color: var(--muted);
+        }
+        
+        .btn {
+            background: var(--primary);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 16px;
+        }
+        
+        .btn:hover {
+            background: #1e40af;
+        }
+        
+        h1 {
+            text-align: center;
+            margin: 0 0 8px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: var(--muted);
+            margin-bottom: 32px;
+        }
+        
+        .names-grid {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <a href="admin.html" class="admin-link">관리자 페이지</a>
+    
+    <div class="container">
+        <div class="card">
+            <h1>교육 이수 확인 시스템</h1>
+            <p class="subtitle">본인의 이름을 클릭하여 서명해주세요</p>
+            
+            <div id="loading" class="loading">
+                명단을 불러오는 중...
+            </div>
+            
+            <div id="error" class="error" style="display: none;"></div>
+            
+            <div id="roster-content" style="display: none;">
+                <div class="course-info">
+                    <div class="course-title" id="course-title"></div>
+                    <div class="course-details" id="course-details"></div>
+                </div>
+                
+                <h2 style="text-align: center;">참여자 명단 (<span id="person-count"></span>명)</h2>
+                <div class="names-grid" id="names-grid"></div>
+            </div>
+            
+            <div id="no-roster" class="no-roster" style="display: none;">
+                <h2>등록된 명단이 없습니다</h2>
+                <p>관리자 페이지에서 먼저 명단을 등록해주세요.</p>
+                <a href="admin.html" class="btn">관리자 페이지로 이동</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Apps Script URL (여기에 실제 URL 입력)
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzWqNe3VWw85p_Hyh559Z36HJ--raMcFTRGuerobC1UV8vROnlML63agL2JifYM2MtL/exec';
+        
+        async function loadRoster() {
+            try {
+                const response = await fetch(`/api/get-roster`);
+                const result = await response.json();
+                
+                document.getElementById('loading').style.display = 'none';
+                
+                if (!result.ok) {
+                    throw new Error(result.error || '명단을 불러올 수 없습니다.');
+                }
+                
+                if (!result.hasRoster) {
+                    document.getElementById('no-roster').style.display = 'block';
+                    return;
+                }
+                
+                // 명단 정보 표시
+                document.getElementById('course-title').textContent = result.course;
+                
+                let details = `이수일자: ${result.date}`;
+                if (result.memo) {
+                    details += ` | ${result.memo}`;
+                }
+                document.getElementById('course-details').textContent = details;
+                document.getElementById('person-count').textContent = result.count;
+                
+                // 참여자 목록 생성
+                const namesGrid = document.getElementById('names-grid');
+                namesGrid.innerHTML = '';
+                
+                result.names.forEach(name => {
+                    const link = document.createElement('a');
+                    link.href = `sign.html?name=${encodeURIComponent(name)}&course=${encodeURIComponent(result.course)}&date=${encodeURIComponent(result.date)}&memo=${encodeURIComponent(result.memo || '')}`;
+                    link.className = 'person-btn';
+                    link.textContent = name;
+                    namesGrid.appendChild(link);
+                });
+                
+                document.getElementById('roster-content').style.display = 'block';
+                
+            } catch (error) {
+                console.error('명단 로드 오류:', error);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').textContent = '명단을 불러오는 중 오류가 발생했습니다: ' + error.message;
+            }
+        }
+        
+        // 페이지 로드 시 명단 불러오기
+        document.addEventListener('DOMContentLoaded', loadRoster);
+    </script>
+</body>
+</html>
