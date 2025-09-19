@@ -284,18 +284,31 @@
             showStatus('명단을 등록하는 중...', 'info');
             
             try {
-                const response = await fetch('/api/save-roster', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        course: course,
-                        date: date,
-                        memo: memo,
-                        names: names.join(',')
-                    })
-                });
+const params = new URLSearchParams({
+    action: 'saveRoster',
+    course: course,
+    date: date,
+    memo: memo,
+    names: names.join(','),
+    callback: 'handleSaveResult'
+});
+
+const script = document.createElement('script');
+script.src = `https://script.google.com/macros/s/AKfycbzWqNe3VWw85p_Hyh559Z36HJ--raMcFTRGuerobC1UV8vROnlML63agL2JifYM2MtL/exec?${params.toString()}`;
+
+window.handleSaveResult = function(result) {
+    if (result.ok) {
+        showStatus(`명단이 성공적으로 등록되었습니다! (${names.length}명)`, 'success');
+    } else {
+        throw new Error(result.error || '명단 등록에 실패했습니다.');
+    }
+    document.head.removeChild(script);
+    delete window.handleSaveResult;
+    saveBtn.disabled = false;
+};
+
+document.head.appendChild(script);
+return; // fetch 부분 실행 안되도록
                 
                 const result = await response.json();
                 
@@ -407,3 +420,4 @@
     </script>
 </body>
 </html>
+
