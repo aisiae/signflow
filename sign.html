@@ -137,20 +137,6 @@
         
         .back-link:hover { color: var(--ink); border-color: var(--primary); }
         
-        .loading-spinner {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid var(--border);
-            border-radius: 50%;
-            border-top-color: var(--primary);
-            animation: spin 1s ease-in-out infinite;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
         .user-info {
             background: #0f1320;
             padding: 16px;
@@ -226,10 +212,7 @@
                     </div>
                 </div>
                 
-                <button type="submit" class="btn primary" id="submitBtn">
-                    <span id="submitText">제출하기</span>
-                    <span id="submitSpinner" class="loading-spinner" style="display: none;"></span>
-                </button>
+                <button type="submit" class="btn primary" id="submitBtn">제출하기</button>
                 <div id="status" class="status"></div>
             </form>
         </div>
@@ -237,10 +220,11 @@
 
     <script>
         // Apps Script URL - 실제 배포된 URL 사용
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwCF-0ElelmDbyVNORz3Qjd9mHMC6N4UF2QGpeZ12BFZpu1mPFVdQHJUENsevsh2isXuA/exec';
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzbn0debjMZNG7jedaR6wAbsDqBDJWTewpURZiLIAdtMKlC6aciaC920j7x6tbtO_XHfA/exec';
         
-        let signaturePad;
+        let signaturePad = null;
         
+        // URL 파라미터 읽기
         function getUrlParams() {
             const params = new URLSearchParams(window.location.search);
             return {
@@ -252,8 +236,10 @@
             };
         }
         
+        // 폼에 URL 파라미터 값 채우기
         function fillFormFromParams() {
             const params = getUrlParams();
+            console.log('URL 파라미터:', params);
             
             if (params.name) {
                 document.getElementById('name').value = params.name;
@@ -270,17 +256,30 @@
                 document.getElementById('phone').value = params.phone;
             }
             
-            // 이수일자는 기본값만 설정하고 사용자가 수정 가능
+            // 이수일자는 기본값 설정
             if (params.date) {
                 document.getElementById('date').value = params.date;
             } else {
-                // 오늘 날짜를 기본값으로 설정
                 document.getElementById('date').value = new Date().toISOString().split('T')[0];
             }
         }
         
+        // 서명 패드 초기화
         function initSignaturePad() {
+            console.log('서명 패드 초기화 시작');
+            
             const canvas = document.getElementById('signaturePad');
+            if (!canvas) {
+                console.error('서명 패드 캔버스를 찾을 수 없습니다');
+                return;
+            }
+            
+            // SignaturePad 라이브러리 확인
+            if (typeof SignaturePad === 'undefined') {
+                console.error('SignaturePad 라이브러리가 로드되지 않았습니다');
+                showStatus('서명 기능을 로드하는 중 오류가 발생했습니다. 페이지를 새로고침해주세요.', 'error');
+                return;
+            }
             
             function resizeCanvas() {
                 const ratio = Math.max(window.devicePixelRatio || 1, 1);
@@ -295,15 +294,23 @@
             resizeCanvas();
             window.addEventListener('resize', resizeCanvas);
             
-            signaturePad = new SignaturePad(canvas, {
-                backgroundColor: 'rgba(255,255,255,0)',
-                penColor: '#ffffff',
-                minWidth: 1,
-                maxWidth: 3,
-                throttle: 16
-            });
+            try {
+                signaturePad = new SignaturePad(canvas, {
+                    backgroundColor: 'rgba(255,255,255,0)',
+                    penColor: '#ffffff',
+                    minWidth: 1,
+                    maxWidth: 3,
+                    throttle: 16
+                });
+                
+                console.log('서명 패드 초기화 완료');
+            } catch (error) {
+                console.error('서명 패드 초기화 실패:', error);
+                showStatus('서명 기능 초기화에 실패했습니다.', 'error');
+            }
         }
         
+        // 상태 메시지 표시
         function showStatus(message, type = 'info') {
             const statusEl = document.getElementById('status');
             statusEl.textContent = message;
@@ -311,39 +318,28 @@
             statusEl.style.display = 'block';
             
             if (type === 'success') {
-                setTimeout(() => {
-                    statusEl.style.display = 'none';
-                }, 15000);
+                setTimeout(() => statusEl.style.display = 'none', 15000);
             } else if (type === 'error') {
-                setTimeout(() => {
-                    statusEl.style.display = 'none';
-                }, 10000);
+                setTimeout(() => statusEl.style.display = 'none', 10000);
             }
         }
         
-        function setLoading(isLoading) {
-            const btn = document.getElementById('submitBtn');
-            const text = document.getElementById('submitText');
-            const spinner = document.getElementById('submitSpinner');
-            
-            btn.disabled = isLoading;
-            
-            if (isLoading) {
-                text.style.display = 'none';
-                spinner.style.display = 'inline-block';
-            } else {
-                text.style.display = 'inline';
-                spinner.style.display = 'none';
-            }
-        }
-        
+        // 휴대폰 번호 검증
         function validatePhone(phone) {
             const cleanPhone = phone.replace(/\D/g, '');
             return cleanPhone.length >= 10 && cleanPhone.length <= 11;
         }
         
+        // 서명 제출 처리
         function handleSubmit(e) {
             e.preventDefault();
+            console.log('서명 제출 시작');
+            
+            // 서명 패드 확인
+            if (!signaturePad) {
+                showStatus('서명 기능이 초기화되지 않았습니다. 페이지를 새로고침해주세요.', 'error');
+                return;
+            }
             
             // 서명 확인
             if (signaturePad.isEmpty()) {
@@ -353,8 +349,6 @@
             
             // 휴대폰 번호 검증
             const phoneInput = document.getElementById('phone');
-            const phone = phoneInput.value.replace(/\D/g, '');
-            
             if (!validatePhone(phoneInput.value)) {
                 alert('휴대폰 번호를 정확히 입력해주세요. (10-11자리 숫자)');
                 phoneInput.focus();
@@ -365,6 +359,7 @@
             const name = document.getElementById('name').value.trim();
             const course = document.getElementById('course').value.trim();
             const date = document.getElementById('date').value;
+            const phone = phoneInput.value.replace(/\D/g, '');
             
             if (!name || !course || !date) {
                 alert('모든 필수 정보를 입력해주세요.');
@@ -377,27 +372,36 @@
                 return;
             }
             
-            // 로딩 시작
-            setLoading(true);
+            // 제출 버튼 비활성화
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '제출 중...';
+            
             showStatus('서명을 제출하는 중입니다...', 'info');
             
-            // 제출 데이터 준비 (이미지 품질 최적화)
+            // 제출 데이터 준비 (이미지 압축)
             const formData = {
                 name: name,
                 phone: phone,
                 course: course,
                 date: date,
                 memo: getUrlParams().memo || '',
-                signature: signaturePad.toDataURL('image/jpeg', 0.5), // JPEG 형식, 50% 품질로 압축
+                signature: signaturePad.toDataURL('image/jpeg', 0.3), // JPEG 30% 품질로 압축
                 submittedAt: new Date().toISOString()
             };
             
-            console.log('제출 데이터:', { ...formData, signature: 'base64 data...' });
+            console.log('제출 데이터 준비 완료, 서명 크기:', formData.signature.length);
             
-            // 먼저 POST 방식으로 시도
-            tryPostSubmission(formData)
-                .then(result => {
-                    if (result.ok) {
+            // POST 방식으로 먼저 시도
+            submitViaPost(formData)
+                .then(success => {
+                    if (success) return;
+                    // POST 실패 시 JSONP 방식으로 재시도
+                    console.log('POST 실패, JSONP로 재시도');
+                    return submitViaJsonp(formData);
+                })
+                .then(success => {
+                    if (success) {
                         showStatus('서명이 성공적으로 제출되었습니다! 5초 후 메인 페이지로 이동합니다.', 'success');
                         
                         // 폼 비활성화
@@ -409,18 +413,25 @@
                             window.location.href = 'index.html';
                         }, 5000);
                     } else {
-                        throw new Error(result.error || 'POST 방식 실패');
+                        throw new Error('모든 제출 방법이 실패했습니다.');
                     }
                 })
-                .catch(postError => {
-                    console.log('POST 방식 실패, JSONP 방식으로 재시도:', postError);
-                    tryJsonpSubmission(formData);
+                .catch(error => {
+                    console.error('서명 제출 실패:', error);
+                    showStatus('서명 제출에 실패했습니다: ' + error.message, 'error');
+                })
+                .finally(() => {
+                    // 제출 버튼 복원
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = '제출하기';
                 });
         }
         
-        // POST 방식 시도
-        async function tryPostSubmission(formData) {
+        // POST 방식 제출
+        async function submitViaPost(formData) {
             try {
+                console.log('POST 방식 제출 시도');
+                
                 const response = await fetch(APPS_SCRIPT_URL, {
                     method: 'POST',
                     mode: 'cors',
@@ -434,165 +445,114 @@
                     throw new Error(`HTTP ${response.status}`);
                 }
                 
-                return await response.json();
+                const result = await response.json();
+                console.log('POST 응답:', result);
+                
+                if (result.ok) {
+                    return true;
+                } else {
+                    throw new Error(result.error || 'POST 서버 오류');
+                }
+                
             } catch (error) {
-                throw error;
+                console.log('POST 방식 실패:', error);
+                return false;
             }
         }
         
-        // JSONP 방식 fallback
-        function tryJsonpSubmission(formData) {
-            // JSONP 콜백 함수 생성
-            const callbackName = 'submitSignatureCallback_' + Date.now();
-            
-            // 타임아웃 설정
-            const timeoutId = setTimeout(() => {
-                showStatus('서버 응답 시간이 초과되었습니다. 다시 시도해주세요.', 'error');
-                cleanup();
-            }, 60000);
-            
-            // 정리 함수
-            function cleanup() {
-                clearTimeout(timeoutId);
-                delete window[callbackName];
-                const script = document.getElementById('submit-jsonp-script');
-                if (script && script.parentNode) {
-                    document.head.removeChild(script);
-                }
-                setLoading(false);
-            }
-            
-            // 콜백 함수 정의
-            window[callbackName] = function(result) {
-                console.log('JSONP 서명 제출 응답:', result);
+        // JSONP 방식 제출
+        function submitViaJsonp(formData) {
+            return new Promise((resolve, reject) => {
+                console.log('JSONP 방식 제출 시도');
                 
-                try {
-                    if (result && result.ok) {
-                        showStatus('서명이 성공적으로 제출되었습니다! 5초 후 메인 페이지로 이동합니다.', 'success');
-                        
-                        // 폼 비활성화
-                        document.getElementById('signatureForm').style.pointerEvents = 'none';
-                        document.getElementById('signatureForm').style.opacity = '0.7';
-                        
-                        // 5초 후 메인 페이지로 이동
-                        setTimeout(() => {
-                            window.location.href = 'index.html';
-                        }, 5000);
-                        
-                    } else {
-                        throw new Error(result?.error || '서명 제출에 실패했습니다.');
-                    }
-                } catch (error) {
-                    console.error('제출 오류:', error);
-                    showStatus('서명 제출에 실패했습니다: ' + error.message, 'error');
-                } finally {
-                    cleanup();
+                // 서명 데이터 크기 확인
+                if (formData.signature.length > 8000) {
+                    reject(new Error('서명 데이터가 너무 큽니다. 더 간단하게 서명해주세요.'));
+                    return;
                 }
-            };
-            
-            // 서명 데이터가 너무 클 경우를 대비해 크기 확인
-            const signatureSize = formData.signature.length;
-            console.log('서명 데이터 크기:', signatureSize, 'characters');
-            
-            if (signatureSize > 8000) { // URL 길이 제한 고려
-                showStatus('서명 데이터가 너무 큽니다. 더 간단하게 서명해주세요.', 'error');
-                setLoading(false);
-                return;
-            }
-            
-            // JSONP 콜백 함수 생성
-            const callbackName = 'submitSignatureCallback_' + Date.now();
-            
-            // 타임아웃 설정
-            const timeoutId = setTimeout(() => {
-                showStatus('서버 응답 시간이 초과되었습니다. 다시 시도해주세요.', 'error');
-                cleanup();
-            }, 60000); // 서명 제출은 더 긴 시간 허용
-            
-            // 정리 함수
-            function cleanup() {
-                clearTimeout(timeoutId);
-                delete window[callbackName];
-                const script = document.getElementById('submit-jsonp-script');
-                if (script && script.parentNode) {
-                    document.head.removeChild(script);
-                }
-                setLoading(false);
-            }
-            
-            // 콜백 함수 정의
-            window[callbackName] = function(result) {
-                console.log('서명 제출 응답:', result);
                 
-                try {
-                    if (result && result.ok) {
-                        showStatus('서명이 성공적으로 제출되었습니다! 5초 후 메인 페이지로 이동합니다.', 'success');
-                        
-                        // 폼 비활성화
-                        document.getElementById('signatureForm').style.pointerEvents = 'none';
-                        document.getElementById('signatureForm').style.opacity = '0.7';
-                        
-                        // 5초 후 메인 페이지로 이동
-                        setTimeout(() => {
-                            window.location.href = 'index.html';
-                        }, 5000);
-                        
-                    } else {
-                        throw new Error(result?.error || '서명 제출에 실패했습니다.');
-                    }
-                } catch (error) {
-                    console.error('제출 오류:', error);
-                    showStatus('서명 제출에 실패했습니다: ' + error.message, 'error');
-                } finally {
+                const callbackName = 'submitCallback' + Date.now();
+                
+                // 타임아웃 설정
+                const timeoutId = setTimeout(() => {
                     cleanup();
+                    reject(new Error('서버 응답 시간이 초과되었습니다.'));
+                }, 60000);
+                
+                // 정리 함수
+                function cleanup() {
+                    clearTimeout(timeoutId);
+                    delete window[callbackName];
+                    const script = document.getElementById('jsonp-script');
+                    if (script && script.parentNode) {
+                        document.head.removeChild(script);
+                    }
                 }
-            };
-            
-            // URL 길이 제한을 고려한 GET 요청 (서명 데이터가 클 수 있음)
-            // 실제로는 POST 방식이 더 적합하지만, CORS 문제로 GET 방식 사용
-            const params = new URLSearchParams({
-                action: 'submitSignature',
-                name: formData.name,
-                phone: formData.phone,
-                course: formData.course,
-                date: formData.date,
-                memo: formData.memo,
-                signature: formData.signature,
-                submittedAt: formData.submittedAt,
-                callback: callbackName,
-                _t: Date.now()
+                
+                // 콜백 함수 정의
+                window[callbackName] = function(result) {
+                    console.log('JSONP 응답:', result);
+                    cleanup();
+                    
+                    if (result && result.ok) {
+                        resolve(true);
+                    } else {
+                        reject(new Error(result?.error || 'JSONP 서버 오류'));
+                    }
+                };
+                
+                // JSONP 요청 생성
+                const params = new URLSearchParams({
+                    action: 'submitSignature',
+                    name: formData.name,
+                    phone: formData.phone,
+                    course: formData.course,
+                    date: formData.date,
+                    memo: formData.memo,
+                    signature: formData.signature,
+                    submittedAt: formData.submittedAt,
+                    callback: callbackName,
+                    _t: Date.now()
+                });
+                
+                const script = document.createElement('script');
+                script.id = 'jsonp-script';
+                script.src = `${APPS_SCRIPT_URL}?${params.toString()}`;
+                
+                script.onerror = function() {
+                    cleanup();
+                    reject(new Error('네트워크 연결 오류'));
+                };
+                
+                console.log('JSONP 요청 URL 길이:', script.src.length);
+                document.head.appendChild(script);
             });
-            
-            const script = document.createElement('script');
-            script.id = 'submit-jsonp-script';
-            script.src = `${APPS_SCRIPT_URL}?${params.toString()}`;
-            
-            script.onerror = function() {
-                console.error('JSONP 제출 요청 실패');
-                showStatus('서버에 연결할 수 없습니다. 네트워크 연결을 확인하고 다시 시도해주세요.', 'error');
-                cleanup();
-            };
-            
-            document.head.appendChild(script);
         }
         
         // 페이지 로드 시 초기화
         document.addEventListener('DOMContentLoaded', function() {
             console.log('서명 페이지 로드 완료');
             
+            // 파라미터 채우기
             fillFormFromParams();
-            initSignaturePad();
+            
+            // 서명 패드 초기화 (약간의 지연 후)
+            setTimeout(() => {
+                initSignaturePad();
+            }, 100);
             
             // 이벤트 리스너 등록
-            document.getElementById('clearBtn').addEventListener('click', () => {
-                signaturePad.clear();
+            document.getElementById('clearBtn').addEventListener('click', function() {
+                if (signaturePad) {
+                    signaturePad.clear();
+                }
             });
             
             document.getElementById('signatureForm').addEventListener('submit', handleSubmit);
             
             // 페이지를 떠날 때 경고 (서명 중인 경우)
             window.addEventListener('beforeunload', function(e) {
-                if (!signaturePad.isEmpty()) {
+                if (signaturePad && !signaturePad.isEmpty()) {
                     e.preventDefault();
                     e.returnValue = '';
                 }
