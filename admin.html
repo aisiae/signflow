@@ -129,7 +129,7 @@
 
   <script>
     // 👇 새로 배포한 Apps Script WebApp URL
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwnj4rAzKhWD8gdvd1gbHdjbMrKJA_FiqAK5-LXAUgHIvqYupsj0BX2XatWD8v-Tb2EaA/exec';
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby5aTrdZ1tUmSZSFkoSeQyDYhEXzngopgIDyPv_4h-dyxQoqqH6uyeUFTBJq7AXxR0G-w/exec';
 
     document.addEventListener('DOMContentLoaded', ()=>{
       const today=new Date().toISOString().split('T')[0];
@@ -272,8 +272,8 @@
               </div>
             </div>
             <div class="roster-actions">
-              <button class="btn pdf" onclick="generatePDFForRoster('${roster.course}','${startDate}','${endDate}','${roster.memo||''}')">
-                📄 PDF 생성
+              <button class="btn success" onclick="generateSheetForRoster('${roster.course}','${startDate}','${endDate}','${roster.memo||''}')">
+                📊 스프레드시트 생성
               </button>
               <button class="btn warning" onclick="deleteRoster('${roster.course}','${startDate}','${endDate}','${roster.memo||''}')">
                 🗑️ 삭제
@@ -288,56 +288,66 @@
       document.getElementById('rosterListContent').innerHTML=`<div class="no-rosters" style="color:var(--error);">${msg}</div>`;
     }
 
-    function generatePDFForRoster(course,startDate,endDate,memo){
+    function generateSheetForRoster(course,startDate,endDate,memo){
       if(!course||!startDate||!endDate){
         showStatus('교육 정보가 올바르지 않습니다.','error');
         return;
       }
 
-      const buttons=document.querySelectorAll('.btn.pdf');
+      const buttons=document.querySelectorAll('.btn.success');
       buttons.forEach(btn=>{btn.disabled=true;btn.textContent='생성 중...';});
 
-      showStatus(`"${course}" 교육의 서명 모음집 PDF를 생성하는 중... (최대 1분 소요)`,'info');
+      showStatus(`"${course}" 교육의 서명 스프레드시트를 생성하는 중...`,'info');
 
-      const cb='generatePDFCallback_'+Date.now();
+      const cb='generateSheetCallback_'+Date.now();
       const to=setTimeout(()=>{
-        showStatus('PDF 생성 시간이 초과되었습니다. 다시 시도해주세요.','error');
+        showStatus('스프레드시트 생성 시간이 초과되었습니다. 다시 시도해주세요.','error');
         cleanup();
-      },90000);
+      },60000);
 
       function cleanup(){
         clearTimeout(to);
         delete window[cb];
-        const s=document.getElementById('pdf-jsonp-script');
+        const s=document.getElementById('sheet-jsonp-script');
         if(s&&s.parentNode)document.head.removeChild(s);
-        buttons.forEach(btn=>{btn.disabled=false;btn.textContent='📄 PDF 생성';});
+        buttons.forEach(btn=>{btn.disabled=false;btn.textContent='📊 스프레드시트 생성';});
       }
 
       window[cb]=function(result){
         try{
           if(result&&result.ok){
-            showStatus(`PDF 생성 완료! (${result.participantCount}명의 서명 포함)`,'success');
+            showStatus(`스프레드시트 생성 완료! (${result.participantCount}명의 서명 포함)`,'success');
             setTimeout(()=>{
-              if(confirm('PDF가 생성되었습니다. 지금 다운로드하시겠습니까?')){
-                window.open(result.pdfUrl,'_blank');
+              if(confirm('스프레드시트가 생성되었습니다. 지금 열어보시겠습니까?')){
+                window.open(result.sheetUrl,'_blank');
               }
             },1000);
           }else{
-            throw new Error(result?.error||'PDF 생성 실패');
+            throw new Error(result?.error||'스프레드시트 생성 실패');
           }
         }catch(err){
-          showStatus('PDF 생성 실패: '+err.message,'error');
+          showStatus('스프레드시트 생성 실패: '+err.message,'error');
         }finally{
           cleanup();
         }
       };
 
       const params=new URLSearchParams({
-        action:'generatePDF',course,startDate,endDate,memo:memo||'',callback:cb,_t:Date.now()
+        action:'generateSignatureSheet',course,startDate,endDate,memo:memo||'',callback:cb,_t:Date.now()
       });
 
       const s=document.createElement('script');
-      s.id='pdf-jsonp-script';
+      s.id='sheet-jsonp-script';
+      s.src=`${APPS_SCRIPT_URL}?${params.toString()}`;
+      s.onerror=function(){showStatus('서버 연결 오류','error');cleanup();};
+      document.head.appendChild(s);
+    }
+
+    function deleteRoster(course,startDate,endDate,memo){
+      });
+
+      const s=document.createElement('script');
+      s.id='sheet-jsonp-script';
       s.src=`${APPS_SCRIPT_URL}?${params.toString()}`;
       s.onerror=function(){showStatus('서버 연결 오류','error');cleanup();};
       document.head.appendChild(s);
