@@ -13,6 +13,7 @@
     .course-info{background:#0f1320;padding:20px;border-radius:12px;margin-bottom:30px;text-align:center}
     .course-title{font-size:24px;font-weight:700;color:var(--primary);margin-bottom:8px}
     .course-details{color:var(--muted);font-size:16px}
+    .course-period{color:var(--success);font-weight:600;margin-top:8px}
     .person-btn{display:inline-block;background:#1a2332;border:1px solid var(--border);color:var(--ink);padding:12px 20px;margin:6px;border-radius:25px;text-decoration:none;font-weight:500;transition:.3s}
     .person-btn:hover{background:var(--primary);border-color:var(--primary);transform:translateY(-2px)}
     .admin-link{position:fixed;top:20px;right:20px;background:var(--card);border:1px solid var(--border);padding:8px 12px;border-radius:6px;color:var(--muted);text-decoration:none;font-size:14px}
@@ -46,6 +47,7 @@
         <div class="course-info">
           <div class="course-title" id="course-title"></div>
           <div class="course-details" id="course-details"></div>
+          <div class="course-period" id="course-period"></div>
         </div>
         <h2 style="text-align:center;">참여자 명단 (<span id="person-count"></span>명)</h2>
         <div class="names-grid" id="names-grid"></div>
@@ -61,7 +63,7 @@
 
   <script>
     // 👇 새로 배포한 Apps Script WebApp URL
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby5aTrdZ1tUmSZSFkoSeQyDYhEXzngopgIDyPv_4h-dyxQoqqH6uyeUFTBJq7AXxR0G-w/exec';
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyABrgLCJdbnWi9lgjl15zarESDPdkxqTCIwvSwDJyBxAUxjM94TGRr6ZKw7IIJvL7dGA/exec';
 
     function loadRoster(){
       const cb='loadRosterCallback_'+Date.now();
@@ -72,17 +74,42 @@
         try{
           if(!result||!result.ok){throw new Error(result?.error||'명단을 불러올 수 없습니다.');}
           if(!result.hasRoster){document.getElementById('no-roster').style.display='block';return;}
+          
           document.getElementById('course-title').textContent=result.course||'교육명 없음';
-          let details=`교육기간: ${result.startDate||'시작일없음'} ~ ${result.endDate||'끝일없음'}`; if(result.memo){details+=` | ${result.memo}`;}
-          if(result.isExpired){details+=' (기간 만료)';}
+          
+          // 메모 처리
+          let details = '';
+          if(result.memo){
+            details = result.memo;
+          }
           document.getElementById('course-details').textContent=details;
+          
+          // 교육 기간 표시
+          let period = '';
+          if(result.startDate && result.endDate){
+            if(result.startDate === result.endDate){
+              period = `교육일자: ${result.startDate}`;
+            } else {
+              period = `교육기간: ${result.startDate} ~ ${result.endDate}`;
+            }
+          }
+          document.getElementById('course-period').textContent=period;
+          
           document.getElementById('person-count').textContent=result.count||0;
           const grid=document.getElementById('names-grid'); grid.innerHTML='';
           (result.names||[]).forEach(name=>{
             if(!name||!name.trim())return;
-            const params=new URLSearchParams({name:name.trim(),course:result.course||'',startDate:result.startDate||'',endDate:result.endDate||''});
+            const params=new URLSearchParams({
+              name:name.trim(),
+              course:result.course||'',
+              startDate:result.startDate||'',
+              endDate:result.endDate||''
+            });
             if(result.memo)params.set('memo',result.memo);
-            const a=document.createElement('a'); a.href=`sign.html?${params.toString()}`; a.className='person-btn'; a.textContent=name.trim();
+            const a=document.createElement('a'); 
+            a.href=`sign.html?${params.toString()}`; 
+            a.className='person-btn'; 
+            a.textContent=name.trim();
             grid.appendChild(a);
           });
           document.getElementById('roster-content').style.display='block';
@@ -99,4 +126,3 @@
   </script>
 </body>
 </html>
-
