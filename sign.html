@@ -268,4 +268,47 @@
           cleanup(); 
           if(result&&result.ok){
             resolve(true);
+          } else {
+            reject(new Error(result?.error||'서버 오류'));
           }
+        };
+        
+        const params=new URLSearchParams({
+          action:'submitSignature',
+          name:formData.name,
+          phone:formData.phone,
+          course:formData.course,
+          completionDate:formData.completionDate,
+          memo:formData.memo,
+          signature:formData.signature,
+          submittedAt:formData.submittedAt,
+          callback:cb,
+          _t:Date.now()
+        });
+        
+        const script=document.createElement('script'); 
+        script.id='jsonp-submit'; 
+        script.src=`${APPS_SCRIPT_URL}?${params.toString()}`;
+        script.onerror=function(){
+          cleanup();
+          reject(new Error('네트워크 연결 오류'));
+        };
+        document.head.appendChild(script);
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded',()=>{
+      fillFormFromParams();
+      setTimeout(initSignaturePad,100);
+      document.getElementById('clearBtn').addEventListener('click',()=>signaturePad&&signaturePad.clear());
+      document.getElementById('signatureForm').addEventListener('submit',handleSubmit);
+      window.addEventListener('beforeunload',e=>{
+        if(signaturePad&&!signaturePad.isEmpty()){
+          e.preventDefault();
+          e.returnValue='';
+        }
+      });
+    });
+  </script>
+</body>
+</html>
