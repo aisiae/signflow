@@ -64,9 +64,9 @@
             <input type="text" id="course" name="course" readonly>
           </div>
           <div class="form-group">
-            <label for="date">이수일자 *</label>
+            <label for="date">서명일자 *</label>
             <input type="date" id="date" name="date" required>
-            <div class="help-text" style="color:#94a3b8;font-size:14px">실제 이수한 날짜를 선택해주세요</div>
+            <div class="help-text" style="color:#94a3b8;font-size:14px">서명하는 날짜를 선택해주세요</div>
           </div>
         </div>
 
@@ -94,12 +94,12 @@
 
   <script>
     // 👇 새로 배포한 Apps Script WebApp URL
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbycyuwhzAklzawB9JJQx0fdMHyiYRftHf3Qj44IWWusF8XKQ7PkC6PtsKJCD680T1CtLg/exec';
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwnj4rAzKhWD8gdvd1gbHdjbMrKJA_FiqAK5-LXAUgHIvqYupsj0BX2XatWD8v-Tb2EaA/exec';
     let signaturePad=null;
 
     function getUrlParams(){
       const p=new URLSearchParams(window.location.search);
-      return {name:p.get('name')||'',course:p.get('course')||'',date:p.get('date')||'',memo:p.get('memo')||'',phone:p.get('phone')||''};
+      return {name:p.get('name')||'',course:p.get('course')||'',startDate:p.get('startDate')||'',endDate:p.get('endDate')||'',memo:p.get('memo')||'',phone:p.get('phone')||''};
     }
     function fillFormFromParams(){
       const params=getUrlParams();
@@ -115,7 +115,15 @@
       if(params.phone){
         document.getElementById('phone').value=params.phone;
       }
-      document.getElementById('date').value=params.date||new Date().toISOString().split('T')[0];
+      // 서명일자는 오늘 날짜로 기본 설정, 교육 기간 범위 내에서만 선택 가능
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('date').value=today;
+      
+      // 교육 기간이 있으면 날짜 입력 범위 제한
+      if(params.startDate && params.endDate){
+        document.getElementById('date').min = params.startDate;
+        document.getElementById('date').max = params.endDate;
+      }
     }
     function initSignaturePad(){
       const canvas=document.getElementById('signaturePad');
@@ -141,7 +149,7 @@
       const submitBtn=document.getElementById('submitBtn'); submitBtn.disabled=true; submitBtn.textContent='제출 중...';
       showStatus('서명을 제출하는 중입니다...','info');
 
-      const formData={name,phone,course,date,memo:getUrlParams().memo||'',signature:signaturePad.toDataURL('image/jpeg',0.15),submittedAt:new Date().toISOString()};
+      const formData={name,phone,course,startDate:getUrlParams().startDate||'',endDate:getUrlParams().endDate||'',memo:getUrlParams().memo||'',signature:signaturePad.toDataURL('image/jpeg',0.15),submittedAt:new Date().toISOString()};
       submitViaJsonp(formData).then(ok=>{
         if(ok){
           showStatus('서명이 성공적으로 제출되었습니다! 5초 후 메인으로 이동합니다.','success');
@@ -161,7 +169,7 @@
         const to=setTimeout(()=>{cleanup();reject(new Error('서버 응답 시간이 초과되었습니다.'));},60000);
         function cleanup(){clearTimeout(to);delete window[cb];const s=document.getElementById('jsonp-submit');if(s&&s.parentNode)document.head.removeChild(s);}
         window[cb]=function(result){cleanup(); if(result&&result.ok){resolve(true);} else {reject(new Error(result?.error||'서버 오류'));}};
-        const params=new URLSearchParams({action:'submitSignature',name:formData.name,phone:formData.phone,course:formData.course,date:formData.date,memo:formData.memo,signature:formData.signature,submittedAt:formData.submittedAt,callback:cb,_t:Date.now()});
+        const params=new URLSearchParams({action:'submitSignature',name:formData.name,phone:formData.phone,course:formData.course,startDate:formData.startDate,endDate:formData.endDate,memo:formData.memo,signature:formData.signature,submittedAt:formData.submittedAt,callback:cb,_t:Date.now()});
         const script=document.createElement('script'); script.id='jsonp-submit'; script.src=`${APPS_SCRIPT_URL}?${params.toString()}`;
         script.onerror=function(){cleanup();reject(new Error('네트워크 연결 오류'));};
         document.head.appendChild(script);
@@ -178,5 +186,3 @@
   </script>
 </body>
 </html>
-
-
