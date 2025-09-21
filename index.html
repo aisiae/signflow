@@ -22,6 +22,8 @@
     .no-roster{text-align:center;color:var(--muted)}
     .btn{background:var(--primary);color:#fff;padding:12px 24px;border:none;border-radius:8px;cursor:pointer;text-decoration:none;display:inline-block;margin-top:16px;font-weight:500;transition:.3s}
     .btn:hover{background:#1e40af}
+    h1{text-align:center;margin:0 0 8px;font-size:28px}
+    .subtitle{text-align:center;color:var(--muted);margin-bottom:32px;font-size:18px}
     .names-grid{text-align:center}
     .status-indicator{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--success);margin-left:8px;animation:pulse 2s infinite}
     @keyframes pulse{0%{opacity:1}50%{opacity:.5}100%{opacity:1}}
@@ -32,8 +34,8 @@
 
   <div class="container">
     <div class="card">
-      <h1 style="text-align:center;margin:0 0 8px;">교육 이수 확인 시스템</h1>
-      <p class="subtitle" style="text-align:center;color:#94a3b8;margin-bottom:32px;">본인의 이름을 클릭하여 서명해주세요</p>
+      <h1>교육 이수 확인 시스템</h1>
+      <p class="subtitle">본인의 이름을 클릭하여 서명해주세요</p>
 
       <div id="loading" class="loading">
         <div>명단을 불러오는 중...</div><div class="status-indicator"></div>
@@ -58,9 +60,8 @@
   </div>
 
   <script>
-    // ① 여기만 바꿉니다. (3단계에서 복사한 googleusercontent 주소 붙여넣기)
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxqFUwh7rcpRN0VzFBeGaoLtpq1_g3nsAElA8kOj-fivyp7xZ2m6v7vl7z7xt7TDciF/exec';
-    function jsonpUrl(base, params){const qs=new URLSearchParams(params).toString();return base+(base.includes('?')?'&':'?')+qs;}
+    // 👇 새로 배포한 Apps Script WebApp URL
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwmGf8uazm4IfaVKFn8qV8YYltsxwZwuCqaG_lWYJeq6PlUxvElDP7SBt-XszOrJEVbyA/exec';
 
     function loadRoster(){
       const cb='loadRosterCallback_'+Date.now();
@@ -88,7 +89,7 @@
       };
       const script=document.createElement('script');
       script.id='jsonp-script';
-      script.src=jsonpUrl(APPS_SCRIPT_URL,{action:'getRoster',callback:cb,_t:Date.now()});
+      script.src=`${APPS_SCRIPT_URL}?action=getRoster&callback=${cb}&_t=${Date.now()}`;
       script.onerror=function(){showError('서버에 연결할 수 없습니다.');cleanup();};
       document.head.appendChild(script);
     }
@@ -97,4 +98,3 @@
   </script>
 </body>
 </html>
-
