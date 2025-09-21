@@ -95,6 +95,7 @@
 
   <script>
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxqFUwh7rcpRN0VzFBeGaoLtpq1_g3nsAElA8kOj-fivyp7xZ2m6v7vl7z7xt7TDciF/exec';
+    function jsonpUrl(base, params){const qs=new URLSearchParams(params).toString();return base+(base.includes('?')?'&':'?')+qs;}
 
     // 엘리먼트 캐시
     const els = {
@@ -109,7 +110,6 @@
       status: document.getElementById('status'),
       mainUrl: document.getElementById('mainUrl'),
       clearBtn: document.getElementById('clearBtn'),
-      // 서명/ PDF 섹션
       sigCourseEl: document.getElementById('sigCourse'),
       sigDateEl: document.getElementById('sigDate'),
       loadSignaturesBtn: document.getElementById('loadSignaturesBtn'),
@@ -145,8 +145,11 @@
       const cb='saveRosterCb_'+Date.now(); const to=setTimeout(()=>{cleanup();showStatus('응답 시간 초과','error');},30000);
       function cleanup(){clearTimeout(to);delete window[cb];const s=document.getElementById('save-jsonp');if(s&&s.parentNode)s.parentNode.removeChild(s);setLoading(false);}
       window[cb]=(res)=>{try{if(res&&res.ok){showStatus(`등록 완료 (${list.length}명)`,'success');els.namesEl.value='';}else{throw new Error(res?.error||'명단 등록 실패');}}catch(err){showStatus('오류: '+err.message,'error');}finally{cleanup();}};
-      const q=new URLSearchParams({action:'saveRoster',course:courseV,date:dateV,memo:memoV,names:list.join(','),callback:cb,_t:Date.now()});
-      const s=document.createElement('script');s.id='save-jsonp';s.src=`${APPS_SCRIPT_URL}?${q.toString()}`;s.onerror=()=>{cleanup();showStatus('서버 연결 오류','error');};document.head.appendChild(s);
+      const s=document.createElement('script');
+      s.id='save-jsonp';
+      s.src=jsonpUrl(APPS_SCRIPT_URL,{action:'saveRoster',course:courseV,date:dateV,memo:memoV,names:list.join(','),callback:cb,_t:Date.now()});
+      s.onerror=()=>{cleanup();showStatus('서버 연결 오류','error');};
+      document.head.appendChild(s);
     });
 
     // 초기화
@@ -172,15 +175,19 @@
         });
         st.textContent=`총 ${res.total}건 중 ${(res.items||[]).length}건 표시`; st.className='status success';
       }catch(e){st.textContent='오류: '+e.message;st.className='status error';}};
-      const q=new URLSearchParams({action:'getSignatures',limit:'200',callback:cb,_t:Date.now()}); if(courseV)q.set('course',courseV); if(dateV)q.set('date',dateV);
-      const s=document.createElement('script');s.id='jsonp-sigs';s.src=`${APPS_SCRIPT_URL}?${q.toString()}`;s.onerror=()=>{cleanup();st.textContent='서버 연결 오류';st.className='status error';};document.head.appendChild(s);
+      const params={action:'getSignatures',limit:'200',callback:cb,_t:Date.now()};
+      if(courseV) params.course=courseV; if(dateV) params.date=dateV;
+      const s=document.createElement('script'); s.id='jsonp-sigs';
+      s.src=jsonpUrl(APPS_SCRIPT_URL, params);
+      s.onerror=()=>{cleanup();st.textContent='서버 연결 오류';st.className='status error';};
+      document.head.appendChild(s);
     });
 
     // PDF 생성
     els.pdfBtn.addEventListener('click',()=>{
       const courseV=els.sigCourseEl.value.trim(); const dateV=els.sigDateEl.value;
-      const q=new URLSearchParams({action:'pdf',_t:Date.now()}); if(courseV)q.set('course',courseV); if(dateV)q.set('date',dateV);
-      const url=`${APPS_SCRIPT_URL}?${q.toString()}`;
+      const params={action:'pdf',_t:Date.now()}; if(courseV) params.course=courseV; if(dateV) params.date=dateV;
+      const url=jsonpUrl(APPS_SCRIPT_URL, params);
       const w=window.open(url,'_blank');
       if(!w){els.sigStatus.textContent='팝업 차단을 해제하고 다시 시도해주세요.';els.sigStatus.className='status error';els.sigStatus.style.display='block';}
     });
