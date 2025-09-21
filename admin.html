@@ -7,17 +7,15 @@
   <style>
     :root{--bg:#0b0d12;--card:#121620;--muted:#94a3b8;--border:#233046;--ink:#e5e7eb;--primary:#1d4ed8;--success:#10b981;--warning:#f59e0b;--error:#ef4444}
     *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,'Noto Sans KR',sans-serif;padding:20px}
-    .container{max-width:900px;margin:0 auto}.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px;margin-bottom:24px;box-shadow:0 10px 25px rgba(0,0,0,.2)}
+    .container{max-width:800px;margin:0 auto}.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px;margin-bottom:24px;box-shadow:0 10px 25px rgba(0,0,0,.2)}
     h1{margin:0 0 8px;color:var(--ink)}.subtitle{color:var(--muted);margin-bottom:32px}
     .form-group{margin-bottom:20px}.form-row{display:grid;gap:16px;grid-template-columns:1fr 1fr}@media(max-width:768px){.form-row{grid-template-columns:1fr}}
-    .form-triple{display:grid;gap:16px;grid-template-columns:2fr 1fr 1fr}@media(max-width:768px){.form-triple{grid-template-columns:1fr}}
     label{display:block;font-weight:600;margin-bottom:8px;color:var(--ink)}
     input[type="text"],input[type="date"],textarea{width:100%;padding:12px 16px;border-radius:10px;border:1px solid var(--border);background:#0f1320;color:var(--ink);font-size:16px;font-family:inherit;transition:border-color .3s}
     textarea{min-height:150px;resize:vertical} input:focus,textarea:focus{outline:none;border-color:var(--primary)}
     .btn{border:1px solid var(--border);background:#101826;color:var(--ink);padding:12px 24px;border-radius:10px;cursor:pointer;font-size:16px;font-weight:500;transition:.3s;text-decoration:none;display:inline-flex;align-items:center;gap:8px;margin-right:12px;margin-bottom:8px}
     .btn:hover{background:#1a2332;border-color:var(--primary)}.btn.primary{border-color:#2563eb;background:var(--primary)}.btn.primary:hover{background:#1e40af}
-    .btn.success{border-color:var(--success);background:var(--success);color:#000}.btn.warning{border-color:var(--warning);background:var(--warning);color:#000}
-    .btn:disabled{opacity:.6;cursor:not-allowed}
+    .btn.success{border-color:var(--success);background:var(--success);color:#000}.btn.warning{border-color:var(--warning);background:var(--warning);color:#000}.btn:disabled{opacity:.6;cursor:not-allowed}
     .status{padding:12px 16px;border-radius:8px;margin:16px 0;font-weight:500;display:none}
     .status.success{background:rgba(16,185,129,.2);color:var(--success);border:1px solid var(--success)}
     .status.error{background:rgba(239,68,68,.2);color:var(--error);border:1px solid var(--error)}
@@ -32,19 +30,11 @@
     .feature-title{font-weight:600;color:var(--success);margin-bottom:8px}
     .loading-spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-radius:50%;border-top-color:var(--primary);animation:spin 1s ease-in-out infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
-    .roster-list{background:#1a1f2e;border:2px solid #8b5cf6;border-radius:12px;padding:24px;margin-top:24px}
-    .roster-title{color:#8b5cf6;font-size:20px;font-weight:600;margin-bottom:16px;text-align:center}
-    .roster-item{background:#0f1320;border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
-    .roster-info{flex:1;min-width:200px}
-    .roster-main{font-weight:600;color:var(--ink);margin-bottom:4px}
-    .roster-details{color:var(--muted);font-size:14px}
-    .roster-actions{display:flex;gap:8px;flex-wrap:wrap}
-    .roster-actions .btn{margin:0;padding:8px 16px;font-size:14px}
-    .no-rosters{text-align:center;color:var(--muted);padding:20px}
-    .status-badge{display:inline-block;padding:4px 8px;border-radius:4px;font-size:12px;font-weight:600;margin-left:8px}
-    .status-active{background:rgba(16,185,129,.2);color:var(--success)}
-    .status-upcoming{background:rgba(29,78,216,.2);color:var(--primary)}
-    .status-completed{background:rgba(107,114,128,.2);color:#9ca3af}
+    .report-section{background:#0a0f19;border:2px solid var(--success);border-radius:12px;padding:20px;margin-top:20px}
+    .report-title{font-weight:600;color:var(--success);margin-bottom:16px;font-size:18px}
+    .date-range{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:end;margin-bottom:16px}
+    .date-range .separator{color:var(--muted);font-weight:bold;padding-bottom:12px}
+    @media(max-width:600px){.date-range{grid-template-columns:1fr;gap:8px;text-align:center}.date-range .separator{display:none}}
   </style>
 </head>
 <body>
@@ -56,25 +46,29 @@
       <p class="subtitle">교육 정보와 참여자 명단을 등록하면 메인 페이지에서 바로 사용할 수 있습니다.</p>
 
       <form id="rosterForm">
-        <div class="form-triple">
-          <div class="form-group">
-            <label for="course">교육명 *</label>
-            <input type="text" id="course" placeholder="예: AI 관리자 교육" required>
-          </div>
-          <div class="form-group">
-            <label for="startDate">시작일 *</label>
-            <input type="date" id="startDate" required>
-          </div>
-          <div class="form-group">
-            <label for="endDate">끝일 *</label>
-            <input type="date" id="endDate" required>
+        <div class="form-group">
+          <label for="course">교육명 *</label>
+          <input type="text" id="course" placeholder="예: AI 관리자 교육" required>
+        </div>
+
+        <div class="form-group">
+          <label>교육일정 *</label>
+          <div class="date-range">
+            <div>
+              <input type="date" id="startDate" required>
+              <div class="help-text">교육 시작일</div>
+            </div>
+            <div class="separator">~</div>
+            <div>
+              <input type="date" id="endDate" required>
+              <div class="help-text">교육 종료일</div>
+            </div>
           </div>
         </div>
 
         <div class="form-group">
           <label for="memo">메모 (선택사항)</label>
           <input type="text" id="memo" placeholder="예: 1차수, 오후반">
-          <div class="help-text">교육 구분이나 특이사항을 입력해주세요</div>
         </div>
 
         <div class="form-group">
@@ -98,422 +92,217 @@
         <button class="copy-btn" onclick="copyMainUrl()">메인 주소 복사</button>
         <div class="help-text" style="margin-top:12px;">명단 등록 후 위 주소를 참여자들에게 공유하세요</div>
       </div>
-    </div>
 
-    <!-- 등록된 교육 목록 및 스프레드시트 생성 -->
-    <div class="roster-list">
-      <div class="roster-title">📚 등록된 교육 목록</div>
-      <div id="rosterListContent">
-        <div class="loading" style="text-align:center;color:var(--muted);padding:20px;">
-          목록을 불러오는 중...
-          <div class="loading-spinner" style="margin-left:8px;"></div>
+      <!-- 서명 현황 보고서 생성 섹션 -->
+      <div class="report-section">
+        <div class="report-title">📊 서명 현황 보고서 생성</div>
+        <p class="help-text" style="margin-bottom:16px;">등록된 교육에 대한 서명 현황을 스프레드시트로 생성합니다.</p>
+        
+        <div class="form-group">
+          <label for="reportCourse">교육명 *</label>
+          <input type="text" id="reportCourse" placeholder="보고서를 생성할 교육명을 입력하세요" required>
         </div>
-      </div>
-      <div style="text-align:center;margin-top:16px;">
-        <button type="button" class="btn" id="refreshBtn">새로고침</button>
-      </div>
-    </div>
 
-    <div class="feature-box">
-      <div class="feature-title">📋 사용 방법</div>
-      <div class="help-text">
-        1) 교육 정보와 참여자 명단 입력 → "명단 등록하기"<br>
-        2) 메인 주소 공유 → 참여자가 교육 기간 중 언제든 서명 가능<br>
-        3) 서명 완료 후 → 해당 교육의 "스프레드시트 생성" 버튼 클릭<br>
-        4) 생성된 스프레드시트에서 서명 이미지 링크 확인<br>
-        5) 완료된 교육은 "삭제" 버튼으로 정리
+        <div class="form-group">
+          <label>교육일정 *</label>
+          <div class="date-range">
+            <div>
+              <input type="date" id="reportStartDate" required>
+              <div class="help-text">교육 시작일</div>
+            </div>
+            <div class="separator">~</div>
+            <div>
+              <input type="date" id="reportEndDate" required>
+              <div class="help-text">교육 종료일</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="text-align:center;">
+          <button type="button" class="btn success" id="generateReportBtn">
+            <span id="reportText">스프레트시트 생성</span>
+            <span id="reportSpinner" class="loading-spinner" style="display:none;"></span>
+          </button>
+        </div>
+
+        <div id="reportStatus" class="status"></div>
+      </div>
+
+      <div class="feature-box">
+        <div class="feature-title">📋 사용 방법</div>
+        <div class="help-text">
+          1) 교육 정보와 참여자 명단 입력 → "명단 등록하기"<br>
+          2) 메인 주소 공유 → 참여자가 본인 이름 클릭 후 서명<br>
+          3) 서명 완료 후 "보고서 생성"으로 현황 확인<br>
+          4) 생성된 스프레드시트에서 서명 링크 및 완료 현황 확인
+        </div>
       </div>
     </div>
   </div>
 
   <script>
-    // Apps Script WebApp URL
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby5aTrdZ1tUmSZSFkoSeQyDYhEXzngopgIDyPv_4h-dyxQoqqH6uyeUFTBJq7AXxR0G-w/exec';
+    // 👇 새로 배포한 Apps Script WebApp URL
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyABrgLCJdbnWi9lgjl15zarESDPdkxqTCIwvSwDJyBxAUxjM94TGRr6ZKw7IIJvL7dGA/exec';
 
-    document.addEventListener('DOMContentLoaded', function(){
-      const today = new Date().toISOString().split('T')[0];
-      document.getElementById('startDate').value = today;
-      
-      const nextWeek = new Date();
-      nextWeek.setDate(nextWeek.getDate() + 7);
-      document.getElementById('endDate').value = nextWeek.toISOString().split('T')[0];
-      
-      const base = window.location.origin + window.location.pathname.replace('admin.html','index.html');
-      document.getElementById('mainUrl').textContent = base;
-      loadRosterList();
-      
-      document.getElementById('startDate').addEventListener('change', function(){
-        const startDate = new Date(this.value);
-        const endDate = new Date(document.getElementById('endDate').value);
-        if(endDate <= startDate){
-          startDate.setDate(startDate.getDate() + 1);
-          document.getElementById('endDate').value = startDate.toISOString().split('T')[0];
-        }
-      });
+    document.addEventListener('DOMContentLoaded', ()=>{
+      const today=new Date().toISOString().split('T')[0];
+      if(!document.getElementById('startDate').value) document.getElementById('startDate').value=today;
+      if(!document.getElementById('endDate').value) document.getElementById('endDate').value=today;
+      const base=window.location.origin+window.location.pathname.replace('admin.html','index.html');
+      document.getElementById('mainUrl').textContent=base;
     });
 
-    function showStatus(message, type){
-      const el = document.getElementById('status');
-      el.textContent = message;
-      el.className = 'status ' + (type || 'info');
-      el.style.display = 'block';
-      if(type === 'success' || type === 'error'){
-        setTimeout(function(){el.style.display = 'none';}, 8000);
-      }
-    }
-
-    function hideStatus(){
-      document.getElementById('status').style.display = 'none';
-    }
-
-    function setLoading(isLoading){
-      const btn = document.getElementById('saveBtn');
-      const text = document.getElementById('saveText');
-      const spinner = document.getElementById('saveSpinner');
-      btn.disabled = isLoading;
-      text.style.display = isLoading ? 'none' : 'inline';
-      spinner.style.display = isLoading ? 'inline-block' : 'none';
-    }
+    function showStatus(m,t='info'){const el=document.getElementById('status');el.textContent=m;el.className=`status ${t}`;el.style.display='block';if(t==='success'||t==='error'){setTimeout(()=>el.style.display='none',8000);}}
+    function showReportStatus(m,t='info'){const el=document.getElementById('reportStatus');el.textContent=m;el.className=`status ${t}`;el.style.display='block';if(t==='success'||t==='error'){setTimeout(()=>el.style.display='none',10000);}}
+    function hideStatus(){document.getElementById('status').style.display='none';}
+    function setLoading(b){const btn=document.getElementById('saveBtn');const text=document.getElementById('saveText');const sp=document.getElementById('saveSpinner');btn.disabled=b;text.style.display=b?'none':'inline';sp.style.display=b?'inline-block':'none';}
+    function setReportLoading(b){const btn=document.getElementById('generateReportBtn');const text=document.getElementById('reportText');const sp=document.getElementById('reportSpinner');btn.disabled=b;text.style.display=b?'none':'inline';sp.style.display=b?'inline-block':'none';}
 
     function handleSubmit(e){
       e.preventDefault();
-      const course = document.getElementById('course').value.trim();
+      const course=document.getElementById('course').value.trim();
+      const startDate=document.getElementById('startDate').value;
+      const endDate=document.getElementById('endDate').value;
+      const memo=document.getElementById('memo').value.trim();
+      const namesText=document.getElementById('names').value.trim();
+      
+      if(!course||!startDate||!endDate||!namesText){
+        showStatus('교육명, 교육일정, 참여자 명단을 모두 입력해주세요.','error');
+        return;
+      }
+      
+      if(new Date(startDate) > new Date(endDate)){
+        showStatus('교육 시작일이 종료일보다 늦을 수 없습니다.','error');
+        return;
+      }
+      
+      const names=(namesText.includes(',')?namesText.split(','):namesText.split('\n')).map(n=>n.trim()).filter(Boolean);
+      if(!names.length){showStatus('올바른 참여자 명단을 입력해주세요.','error');return;}
+
+      setLoading(true); showStatus('명단을 등록하는 중...','info');
+      const cb='saveRosterCallback_'+Date.now(); const to=setTimeout(()=>{showStatus('서버 응답 시간이 초과되었습니다.','error');cleanup();},30000);
+      function cleanup(){clearTimeout(to);delete window[cb];const s=document.getElementById('save-jsonp-script');if(s&&s.parentNode)document.head.removeChild(s);setLoading(false);}
+      window[cb]=function(result){try{if(result&&result.ok){showStatus(`명단이 등록되었습니다! (${names.length}명)`,`success`);document.getElementById('names').value='';fillReportFields();}else{throw new Error(result?.error||'명단 등록 실패');}}catch(err){showStatus('명단 등록 실패: '+err.message,'error');}finally{cleanup();}};
+      const params=new URLSearchParams({action:'saveRoster',course,startDate,endDate,memo,names:names.join(','),callback:cb,_t:Date.now()});
+      const s=document.createElement('script'); s.id='save-jsonp-script'; s.src=`${APPS_SCRIPT_URL}?${params.toString()}`; s.onerror=function(){showStatus('서버 연결 오류','error');cleanup();}; document.head.appendChild(s);
+    }
+
+    function handleGenerateReport(e){
+      e.preventDefault();
+      const course=document.getElementById('reportCourse').value.trim();
+      const startDate=document.getElementById('reportStartDate').value;
+      const endDate=document.getElementById('reportEndDate').value;
+      
+      if(!course||!startDate||!endDate){
+        showReportStatus('교육명과 교육일정을 모두 입력해주세요.','error');
+        return;
+      }
+      
+      if(new Date(startDate) > new Date(endDate)){
+        showReportStatus('교육 시작일이 종료일보다 늦을 수 없습니다.','error');
+        return;
+      }
+
+      setReportLoading(true); 
+      showReportStatus('서명 현황 보고서를 생성하는 중...','info');
+      
+      const cb='generateReportCallback_'+Date.now(); 
+      const to=setTimeout(()=>{
+        showReportStatus('서버 응답 시간이 초과되었습니다.','error');
+        cleanup();
+      },60000);
+      
+      function cleanup(){
+        clearTimeout(to);
+        delete window[cb];
+        const s=document.getElementById('report-jsonp-script');
+        if(s&&s.parentNode)document.head.removeChild(s);
+        setReportLoading(false);
+      }
+      
+      window[cb]=function(result){
+        try{
+          if(result&&result.ok){
+            showReportStatus('보고서가 생성되었습니다!','success');
+            if(result.reportUrl){
+              setTimeout(()=>{
+                window.open(result.reportUrl, '_blank');
+              }, 1000);
+            }
+          }else{
+            throw new Error(result?.error||'보고서 생성 실패');
+          }
+        }catch(err){
+          showReportStatus('보고서 생성 실패: '+err.message,'error');
+        }finally{
+          cleanup();
+        }
+      };
+      
+      const params=new URLSearchParams({
+        action:'generateReport',
+        course,
+        startDate,
+        endDate,
+        callback:cb,
+        _t:Date.now()
+      });
+      
+      const s=document.createElement('script'); 
+      s.id='report-jsonp-script'; 
+      s.src=`${APPS_SCRIPT_URL}?${params.toString()}`; 
+      s.onerror=function(){
+        showReportStatus('서버 연결 오류','error');
+        cleanup();
+      }; 
+      document.head.appendChild(s);
+    }
+
+    function fillReportFields(){
+      // 명단 등록 후 보고서 필드에 같은 값 자동 입력
+      const course = document.getElementById('course').value;
       const startDate = document.getElementById('startDate').value;
       const endDate = document.getElementById('endDate').value;
-      const memo = document.getElementById('memo').value.trim();
-      const namesText = document.getElementById('names').value.trim();
       
-      if(!course || !startDate || !endDate || !namesText){
-        showStatus('교육명, 시작일, 끝일, 참여자 명단을 모두 입력해주세요.', 'error');
-        return;
-      }
-      
-      if(new Date(startDate) >= new Date(endDate)){
-        showStatus('끝일은 시작일보다 뒤여야 합니다.', 'error');
-        return;
-      }
-      
-      const names = (namesText.includes(',') ? namesText.split(',') : namesText.split('\n')).map(function(n){return n.trim();}).filter(Boolean);
-      if(!names.length){
-        showStatus('올바른 참여자 명단을 입력해주세요.', 'error');
-        return;
-      }
-
-      setLoading(true);
-      showStatus('명단을 등록하는 중...', 'info');
-      
-      const callback = 'saveRosterCallback_' + Date.now();
-      const timeout = setTimeout(function(){
-        showStatus('서버 응답 시간이 초과되었습니다.', 'error');
-        cleanup();
-      }, 30000);
-      
-      function cleanup(){
-        clearTimeout(timeout);
-        delete window[callback];
-        const script = document.getElementById('save-jsonp-script');
-        if(script && script.parentNode) document.head.removeChild(script);
-        setLoading(false);
-      }
-      
-      window[callback] = function(result){
-        try{
-          if(result && result.ok){
-            showStatus('명단이 등록되었습니다! (' + names.length + '명)', 'success');
-            document.getElementById('names').value = '';
-            loadRosterList();
-          } else {
-            throw new Error(result ? result.error : '명단 등록 실패');
-          }
-        } catch(err){
-          showStatus('명단 등록 실패: ' + err.message, 'error');
-        } finally {
-          cleanup();
-        }
-      };
-      
-      const params = new URLSearchParams({
-        action: 'saveRoster',
-        course: course,
-        startDate: startDate,
-        endDate: endDate,
-        memo: memo,
-        names: names.join(','),
-        callback: callback,
-        _t: Date.now()
-      });
-      
-      const script = document.createElement('script');
-      script.id = 'save-jsonp-script';
-      script.src = APPS_SCRIPT_URL + '?' + params.toString();
-      script.onerror = function(){
-        showStatus('서버 연결 오류', 'error');
-        cleanup();
-      };
-      document.head.appendChild(script);
-    }
-
-    function loadRosterList(){
-      const callback = 'loadRosterListCallback_' + Date.now();
-      const timeout = setTimeout(function(){
-        showRosterError('서버 응답 시간이 초과되었습니다.');
-        cleanup();
-      }, 30000);
-      
-      function cleanup(){
-        clearTimeout(timeout);
-        delete window[callback];
-        const script = document.getElementById('roster-list-script');
-        if(script && script.parentNode) document.head.removeChild(script);
-      }
-      
-      window[callback] = function(result){
-        try{
-          if(result && result.ok){
-            displayRosterList(result.rosters || []);
-          } else {
-            throw new Error(result ? result.error : '교육 목록을 불러올 수 없습니다.');
-          }
-        } catch(err){
-          showRosterError('목록 로드 실패: ' + err.message);
-        } finally {
-          cleanup();
-        }
-      };
-      
-      const params = new URLSearchParams({
-        action: 'getAllRosters',
-        callback: callback,
-        _t: Date.now()
-      });
-      
-      const script = document.createElement('script');
-      script.id = 'roster-list-script';
-      script.src = APPS_SCRIPT_URL + '?' + params.toString();
-      script.onerror = function(){
-        showRosterError('서버 연결 오류');
-        cleanup();
-      };
-      document.head.appendChild(script);
-    }
-
-    function displayRosterList(rosters){
-      const container = document.getElementById('rosterListContent');
-      
-      if(!rosters || rosters.length === 0){
-        container.innerHTML = '<div class="no-rosters">등록된 교육이 없습니다.</div>';
-        return;
-      }
-      
-      container.innerHTML = rosters.map(function(roster, index){
-        const startDate = roster.startDate || '시작일없음';
-        const endDate = roster.endDate || '끝일없음';
-        const memoStr = roster.memo ? ' | ' + roster.memo : '';
-        
-        let statusBadge = '';
-        if(roster.status === 'active'){
-          statusBadge = '<span class="status-badge status-active">진행중</span>';
-        } else if(roster.status === 'upcoming'){
-          statusBadge = '<span class="status-badge status-upcoming">예정</span>';
-        } else {
-          statusBadge = '<span class="status-badge status-completed">완료</span>';
-        }
-        
-        return [
-          '<div class="roster-item">',
-            '<div class="roster-info">',
-              '<div class="roster-main">' + (roster.course || '교육명없음') + statusBadge + '</div>',
-              '<div class="roster-details">',
-                '📅 ' + startDate + ' ~ ' + endDate + memoStr + ' | 👥 ' + (roster.count || 0) + '명 ',
-                '| 📝 ' + new Date(roster.regTime).toLocaleDateString('ko-KR') + ' 등록',
-              '</div>',
-            '</div>',
-            '<div class="roster-actions">',
-              '<button class="btn success" onclick="generateSheetForRoster(\'' + roster.course + '\',\'' + startDate + '\',\'' + endDate + '\',\'' + (roster.memo || '') + '\')">',
-                '📊 스프레드시트 생성',
-              '</button>',
-              '<button class="btn warning" onclick="deleteRoster(\'' + roster.course + '\',\'' + startDate + '\',\'' + endDate + '\',\'' + (roster.memo || '') + '\')">',
-                '🗑️ 삭제',
-              '</button>',
-            '</div>',
-          '</div>'
-        ].join('');
-      }).join('');
-    }
-
-    function showRosterError(message){
-      document.getElementById('rosterListContent').innerHTML = '<div class="no-rosters" style="color:var(--error);">' + message + '</div>';
-    }
-
-    function generateSheetForRoster(course, startDate, endDate, memo){
-      if(!course || !startDate || !endDate){
-        showStatus('교육 정보가 올바르지 않습니다.', 'error');
-        return;
-      }
-
-      const buttons = document.querySelectorAll('.btn.success');
-      buttons.forEach(function(btn){
-        btn.disabled = true;
-        btn.textContent = '생성 중...';
-      });
-
-      showStatus('"' + course + '" 교육의 서명 스프레드시트를 생성하는 중...', 'info');
-
-      const callback = 'generateSheetCallback_' + Date.now();
-      const timeout = setTimeout(function(){
-        showStatus('스프레드시트 생성 시간이 초과되었습니다. 다시 시도해주세요.', 'error');
-        cleanup();
-      }, 60000);
-
-      function cleanup(){
-        clearTimeout(timeout);
-        delete window[callback];
-        const script = document.getElementById('sheet-jsonp-script');
-        if(script && script.parentNode) document.head.removeChild(script);
-        buttons.forEach(function(btn){
-          btn.disabled = false;
-          btn.textContent = '📊 스프레드시트 생성';
-        });
-      }
-
-      window[callback] = function(result){
-        try{
-          if(result && result.ok){
-            showStatus('스프레드시트 생성 완료! (' + result.participantCount + '명의 서명 포함)', 'success');
-            setTimeout(function(){
-              if(confirm('스프레드시트가 생성되었습니다. 지금 열어보시겠습니까?')){
-                window.open(result.sheetUrl, '_blank');
-              }
-            }, 1000);
-          } else {
-            throw new Error(result ? result.error : '스프레드시트 생성 실패');
-          }
-        } catch(err){
-          showStatus('스프레드시트 생성 실패: ' + err.message, 'error');
-        } finally {
-          cleanup();
-        }
-      };
-
-      const params = new URLSearchParams({
-        action: 'generateSignatureSheet',
-        course: course,
-        startDate: startDate,
-        endDate: endDate,
-        memo: memo || '',
-        callback: callback,
-        _t: Date.now()
-      });
-
-      const script = document.createElement('script');
-      script.id = 'sheet-jsonp-script';
-      script.src = APPS_SCRIPT_URL + '?' + params.toString();
-      script.onerror = function(){
-        showStatus('서버 연결 오류', 'error');
-        cleanup();
-      };
-      document.head.appendChild(script);
-    }
-
-    function deleteRoster(course, startDate, endDate, memo){
-      if(!confirm('"' + course + '" 교육을 삭제하시겠습니까?\n\n⚠️ 주의: 이 작업은 되돌릴 수 없습니다.')){
-        return;
-      }
-
-      showStatus('교육 명단을 삭제하는 중...', 'info');
-
-      const callback = 'deleteRosterCallback_' + Date.now();
-      const timeout = setTimeout(function(){
-        showStatus('삭제 요청 시간이 초과되었습니다.', 'error');
-        cleanup();
-      }, 30000);
-
-      function cleanup(){
-        clearTimeout(timeout);
-        delete window[callback];
-        const script = document.getElementById('delete-jsonp-script');
-        if(script && script.parentNode) document.head.removeChild(script);
-      }
-
-      window[callback] = function(result){
-        try{
-          if(result && result.ok){
-            showStatus('교육이 삭제되었습니다.', 'success');
-            loadRosterList();
-          } else {
-            throw new Error(result ? result.error : '삭제 실패');
-          }
-        } catch(err){
-          showStatus('삭제 실패: ' + err.message, 'error');
-        } finally {
-          cleanup();
-        }
-      };
-
-      const params = new URLSearchParams({
-        action: 'deleteRoster',
-        course: course,
-        startDate: startDate,
-        endDate: endDate,
-        memo: memo || '',
-        callback: callback,
-        _t: Date.now()
-      });
-
-      const script = document.createElement('script');
-      script.id = 'delete-jsonp-script';
-      script.src = APPS_SCRIPT_URL + '?' + params.toString();
-      script.onerror = function(){
-        showStatus('서버 연결 오류', 'error');
-        cleanup();
-      };
-      document.head.appendChild(script);
+      if(course) document.getElementById('reportCourse').value = course;
+      if(startDate) document.getElementById('reportStartDate').value = startDate;
+      if(endDate) document.getElementById('reportEndDate').value = endDate;
     }
 
     function clearForm(){
-      document.getElementById('course').value = '';
-      const today = new Date().toISOString().split('T')[0];
-      document.getElementById('startDate').value = today;
-      const nextWeek = new Date();
-      nextWeek.setDate(nextWeek.getDate() + 7);
-      document.getElementById('endDate').value = nextWeek.toISOString().split('T')[0];
-      document.getElementById('memo').value = '';
-      document.getElementById('names').value = '';
+      document.getElementById('course').value='';
+      const today=new Date().toISOString().split('T')[0];
+      document.getElementById('startDate').value=today;
+      document.getElementById('endDate').value=today;
+      document.getElementById('memo').value='';
+      document.getElementById('names').value='';
       hideStatus();
     }
-
+    
     function copyMainUrl(){
-      const url = document.getElementById('mainUrl').textContent;
-      if(navigator.clipboard && window.isSecureContext){
-        navigator.clipboard.writeText(url).then(function(){
-          showStatus('메인 주소가 복사되었습니다.', 'success');
-        }).catch(function(){
-          fallbackCopy(url);
-        });
+      const url=document.getElementById('mainUrl').textContent; 
+      if(navigator.clipboard&&window.isSecureContext){
+        navigator.clipboard.writeText(url).then(()=>showStatus('메인 주소가 복사되었습니다.','success')).catch(()=>fallback(url));
       } else {
-        fallbackCopy(url);
-      }
+        fallback(url);
+      } 
     }
-
-    function fallbackCopy(text){
-      const textarea = document.createElement('textarea');
-      textarea.value = text;
-      textarea.style.position = 'fixed';
-      document.body.appendChild(textarea);
-      textarea.focus();
-      textarea.select();
+    
+    function fallback(text){
+      const ta=document.createElement('textarea');
+      ta.value=text;
+      ta.style.position='fixed';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
       try{
-        const success = document.execCommand('copy');
-        showStatus(success ? '메인 주소가 복사되었습니다.' : '복사 실패. 수동 복사해주세요.', success ? 'success' : 'error');
-      } catch(e){
-        showStatus('복사 실패. 수동 복사해주세요.', 'error');
+        document.execCommand('copy')?showStatus('메인 주소가 복사되었습니다.','success'):showStatus('복사 실패. 수동 복사해주세요.','error');
+      }catch(e){
+        showStatus('복사 실패. 수동 복사해주세요.','error');
       }
-      document.body.removeChild(textarea);
+      document.body.removeChild(ta);
     }
 
-    document.getElementById('rosterForm').addEventListener('submit', handleSubmit);
-    document.getElementById('clearBtn').addEventListener('click', clearForm);
-    document.getElementById('refreshBtn').addEventListener('click', loadRosterList);
-  </script>
-</body>
-</html>
+    document.getElementById('rosterForm').addEventListener('submit',handleSubmit);
+    document.getElementById('clearBtn').addEventListener('click',clearForm);
+    document.getElementById('generateReportBtn').addEventListener('click',handleGenerateReport);
