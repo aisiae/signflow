@@ -62,29 +62,51 @@
   </div>
 
   <script>
-    // 👇 새로 배포한 Apps Script WebApp URL
+    // 실제 배포된 Apps Script URL로 변경 필요
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxV8keehsbecLCI5J5KZgVuzLEXWt41kRscdGwXx9uuhHLQJBA8NLTbPUBCVw4GxaDe1g/exec';
 
     function loadRoster(){
+      console.log('명단 로딩 시작');
+      
       const cb='loadRosterCallback_'+Date.now();
-      const to=setTimeout(()=>{showError('서버 응답 시간이 초과되었습니다. 새로고침해주세요.');cleanup();},30000);
-      function cleanup(){clearTimeout(to);delete window[cb];const s=document.getElementById('jsonp-script');if(s&&s.parentNode)document.head.removeChild(s);}
+      const timeout=setTimeout(()=>{
+        console.log('시간 초과');
+        showError('서버 응답 시간이 초과되었습니다. 새로고침해주세요.');
+        cleanup();
+      },30000);
+      
+      function cleanup(){
+        clearTimeout(timeout);
+        delete window[cb];
+        const s=document.getElementById('jsonp-script');
+        if(s&&s.parentNode)document.head.removeChild(s);
+      }
+      
       window[cb]=function(result){
+        console.log('서버 응답:', result);
         document.getElementById('loading').style.display='none';
+        
         try{
-          if(!result||!result.ok){throw new Error(result?.error||'명단을 불러올 수 없습니다.');}
-          if(!result.hasRoster){document.getElementById('no-roster').style.display='block';return;}
+          if(!result||!result.ok){
+            throw new Error(result?.error||'명단을 불러올 수 없습니다.');
+          }
           
+          if(!result.hasRoster){
+            document.getElementById('no-roster').style.display='block';
+            return;
+          }
+          
+          // 교육명 표시
           document.getElementById('course-title').textContent=result.course||'교육명 없음';
           
-          // 메모 처리
+          // 메모 처리 (메모만 따로 표시)
           let details = '';
           if(result.memo){
             details = result.memo;
           }
           document.getElementById('course-details').textContent=details;
           
-          // 교육 기간 표시
+          // 교육 기간 표시 (startDate/endDate 사용)
           let period = '';
           if(result.startDate && result.endDate){
             if(result.startDate === result.endDate){
@@ -92,41 +114,73 @@
             } else {
               period = `교육기간: ${result.startDate} ~ ${result.endDate}`;
             }
+          } else if(result.date) {
+            // 구 버전 호환성
+            period = `교육일자: ${result.date}`;
           }
           document.getElementById('course-period').textContent=period;
           
+          // 인원수 표시
           document.getElementById('person-count').textContent=result.count||0;
-          const grid=document.getElementById('names-grid'); grid.innerHTML='';
-          (result.names||[]).forEach(name=>{
-            if(!name||!name.trim())return;
-            const params=new URLSearchParams({
-              name:name.trim(),
-              course:result.course||'',
-              startDate:result.startDate||'',
-              endDate:result.endDate||''
+          
+          // 참여자 명단 표시
+          const grid=document.getElementById('names-grid'); 
+          grid.innerHTML='';
+          
+          console.log('참여자 명단:', result.names);
+          
+          if(result.names && Array.isArray(result.names)){
+            result.names.forEach(name=>{
+              if(!name||!name.trim())return;
+              
+              console.log('처리 중인 이름:', name);
+              
+              const params=new URLSearchParams({
+                name:name.trim(),
+                course:result.course||'',
+                startDate:result.startDate||result.date||'',
+                endDate:result.endDate||result.date||''
+              });
+              
+              if(result.memo) params.set('memo',result.memo);
+              
+              const a=document.createElement('a'); 
+              a.href=`sign.html?${params.toString()}`; 
+              a.className='person-btn'; 
+              a.textContent=name.trim();
+              grid.appendChild(a);
             });
-            if(result.memo)params.set('memo',result.memo);
-            const a=document.createElement('a'); 
-            a.href=`sign.html?${params.toString()}`; 
-            a.className='person-btn'; 
-            a.textContent=name.trim();
-            grid.appendChild(a);
-          });
+          }
+          
           document.getElementById('roster-content').style.display='block';
-        }catch(e){showError('명단 처리 중 오류: '+e.message);}finally{cleanup();}
+          
+        }catch(e){
+          console.error('처리 오류:', e);
+          showError('명단 처리 중 오류: '+e.message);
+        }finally{
+          cleanup();
+        }
       };
+      
       const script=document.createElement('script');
       script.id='jsonp-script';
       script.src=`${APPS_SCRIPT_URL}?action=getRoster&callback=${cb}&_t=${Date.now()}`;
-      script.onerror=function(){showError('서버에 연결할 수 없습니다.');cleanup();};
+      script.onerror=function(){
+        console.error('스크립트 로딩 실패');
+        showError('서버에 연결할 수 없습니다.');
+        cleanup();
+      };
       document.head.appendChild(script);
     }
-    function showError(msg){document.getElementById('loading').style.display='none';const el=document.getElementById('error');el.style.display='block';el.textContent=msg;}
+    
+    function showError(msg){
+      document.getElementById('loading').style.display='none';
+      const el=document.getElementById('error');
+      el.style.display='block';
+      el.textContent=msg;
+    }
+    
     document.addEventListener('DOMContentLoaded',loadRoster);
   </script>
 </body>
 </html>
-
-
-
-
