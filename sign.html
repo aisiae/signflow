@@ -11,21 +11,25 @@
     body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,'Noto Sans KR',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
     .container{max-width:600px;width:100%}
     .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px;box-shadow:0 10px 25px rgba(0,0,0,.3)}
-    h1{margin:0 0 8px;text-align:center}.subtitle{text-align:center;color:#94a3b8;margin-bottom:32px}
+    h1{margin:0 0 8px;color:var(--ink);text-align:center}.subtitle{color:var(--muted);text-align:center;margin-bottom:32px}
     .form-group{margin-bottom:20px}.form-row{display:grid;gap:16px;grid-template-columns:1fr 1fr}@media(max-width:600px){.form-row{grid-template-columns:1fr}}
-    label{display:block;font-weight:600;margin-bottom:8px}
-    input[type="text"],input[type="tel"],input[type="date"]{width:100%;padding:12px 16px;border-radius:10px;border:1px solid var(--border);background:#0f1320;color:var(--ink);font-size:16px}
+    label{display:block;font-weight:600;margin-bottom:8px;color:var(--ink)}
+    input[type="text"],input[type="tel"],input[type="date"]{width:100%;padding:12px 16px;border-radius:10px;border:1px solid var(--border);background:#0f1320;color:var(--ink);font-size:16px;transition:border-color .3s}
     input:focus{outline:none;border-color:var(--primary)}input:read-only{background:#0a0f19;color:var(--muted)}
-    .signature-pad{border:2px solid var(--border);border-radius:12px;width:100%;height:200px;background:#0a0f19;cursor:crosshair;touch-action:none}
-    .signature-controls{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+    .signature-pad{border:2px solid var(--border);border-radius:12px;width:100%;height:200px;background:#0a0f19;cursor:crosshair;touch-action:none;transition:border-color .3s}
+    .signature-pad:hover{border-color:var(--primary)}.signature-controls{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
     .btn{border:1px solid var(--border);background:#101826;color:var(--ink);padding:12px 24px;border-radius:10px;cursor:pointer;font-size:16px;font-weight:500;transition:.3s;text-decoration:none;display:inline-flex;align-items:center;gap:8px}
-    .btn:hover{background:#1a2332;border-color:var(--primary)}.btn.primary{border-color:#2563eb;background:var(--primary)}.btn.primary:hover{background:#1e40af}.btn:disabled{opacity:.6;cursor:not-allowed}
-    .checkbox-group{margin:24px 0}.status{margin-top:16px;padding:12px 16px;border-radius:8px;text-align:center;font-weight:500;display:none}
-    .status.success{background:rgba(16,185,129,.2);color:#10b981;border:1px solid #10b981}
-    .status.error{background:rgba(239,68,68,.2);color:#ef4444;border:1px solid #ef4444}
-    .status.info{background:rgba(29,78,216,.2);color:#1d4ed8;border:1px solid #1d4ed8}
-    .back-link{position:fixed;top:20px;left:20px;color:#94a3b8;text-decoration:none;font-size:14px;padding:8px 12px;border:1px solid var(--border);border-radius:6px;background:var(--card)}
+    .btn:hover{background:#1a2332;border-color:var(--primary)}.btn.primary{border-color:#2563eb;background:var(--primary)}.btn.primary:hover{background:#1e40af}
+    .btn:disabled{opacity:.6;cursor:not-allowed}
+    .checkbox-group{margin:24px 0}.checkbox-wrapper{display:flex;align-items:flex-start;gap:12px}input[type="checkbox"]{margin-top:4px;transform:scale(1.2)}
+    .status{margin-top:16px;padding:12px 16px;border-radius:8px;text-align:center;font-weight:500;display:none}
+    .status.success{background:rgba(16,185,129,.2);color:var(--success);border:1px solid var(--success)}
+    .status.error{background:rgba(239,68,68,.2);color:var(--error);border:1px solid var(--error)}
+    .status.info{background:rgba(29,78,216,.2);color:var(--primary);border:1px solid var(--primary)}
+    .back-link{position:fixed;top:20px;left:20px;color:var(--muted);text-decoration:none;font-size:14px;padding:8px 12px;border:1px solid var(--border);border-radius:6px;background:var(--card);transition:.3s}
+    .back-link:hover{color:var(--ink);border-color:var(--primary)}
     .user-info{background:#0f1320;padding:16px;border-radius:10px;margin-bottom:24px;border-left:4px solid var(--primary)}
+    .user-name{font-size:18px;font-weight:600;color:var(--primary);margin-bottom:4px}.course-name{color:var(--muted);font-size:14px}
   </style>
 </head>
 <body>
@@ -37,8 +41,8 @@
       <p class="subtitle">정보를 확인하고 서명해주세요</p>
 
       <div id="userInfo" class="user-info" style="display:none;">
-        <div id="displayName" style="font-weight:700;color:#1d4ed8;margin-bottom:4px;"></div>
-        <div id="displayCourse" style="color:#94a3b8;font-size:14px;"></div>
+        <div class="user-name" id="displayName"></div>
+        <div class="course-name" id="displayCourse"></div>
       </div>
 
       <form id="signatureForm">
@@ -50,7 +54,7 @@
           <div class="form-group">
             <label for="phone">휴대폰 번호 *</label>
             <input type="tel" id="phone" name="phone" placeholder="010-1234-5678" required>
-            <div style="color:#94a3b8;font-size:13px">숫자만 입력 또는 010-1234-5678 형식</div>
+            <div class="help-text" style="color:#94a3b8;font-size:14px">숫자만 입력하거나 010-1234-5678 형식</div>
           </div>
         </div>
 
@@ -62,6 +66,7 @@
           <div class="form-group">
             <label for="date">이수일자 *</label>
             <input type="date" id="date" name="date" required>
+            <div class="help-text" style="color:#94a3b8;font-size:14px">실제 이수한 날짜를 선택해주세요</div>
           </div>
         </div>
 
@@ -70,12 +75,15 @@
           <canvas id="signaturePad" class="signature-pad"></canvas>
           <div class="signature-controls">
             <button type="button" id="clearBtn" class="btn">지우기</button>
-            <span style="color:#94a3b8">마우스/터치로 서명</span>
+            <span class="help-text" style="color:#94a3b8">마우스나 터치로 서명해주세요</span>
           </div>
         </div>
 
         <div class="checkbox-group">
-          <label><input type="checkbox" id="agree" required> 입력 정보 및 서명 이미지를 교육 이수 확인 목적으로 수집·보관하는 것에 동의합니다.</label>
+          <div class="checkbox-wrapper">
+            <input type="checkbox" id="agree" required>
+            <label for="agree">입력한 정보 및 서명 이미지를 교육 이수 확인 목적으로 수집·보관하는 것에 동의합니다.</label>
+          </div>
         </div>
 
         <button type="submit" class="btn primary" id="submitBtn">제출하기</button>
@@ -85,66 +93,88 @@
   </div>
 
   <script>
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxqFUwh7rcpRN0VzFBeGaoLtpq1_g3nsAElA8kOj-fivyp7xZ2m6v7vl7z7xt7TDciF/exec;
-    function jsonpUrl(base, params){const qs=new URLSearchParams(params).toString();return base+(base.includes('?')?'&':'?')+qs;}
+    // 👇 새로 배포한 Apps Script WebApp URL
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwmGf8uazm4IfaVKFn8qV8YYltsxwZwuCqaG_lWYJeq6PlUxvElDP7SBt-XszOrJEVbyA/exec';
     let signaturePad=null;
 
-    function getUrlParams(){const p=new URLSearchParams(location.search);return {name:p.get('name')||'',course:p.get('course')||'',date:p.get('date')||'',memo:p.get('memo')||'',phone:p.get('phone')||''};}
-    function fillForm(){
-      const pr=getUrlParams();
-      if(pr.name){name.value=pr.name;displayName.textContent=pr.name+' 님';userInfo.style.display='block';}
-      if(pr.course){course.value=pr.course;displayCourse.textContent=pr.course;}
-      if(pr.phone){phone.value=pr.phone;}
-      date.value=pr.date||new Date().toISOString().split('T')[0];
+    function getUrlParams(){
+      const p=new URLSearchParams(window.location.search);
+      return {name:p.get('name')||'',course:p.get('course')||'',date:p.get('date')||'',memo:p.get('memo')||'',phone:p.get('phone')||''};
     }
-    function initPad(){
-      const c=document.getElementById('signaturePad');
-      function resize(){const r=Math.max(window.devicePixelRatio||1,1);const rect=c.getBoundingClientRect();c.width=rect.width*r;c.height=rect.height*r;c.getContext('2d').scale(r,r);c.style.width=rect.width+'px';c.style.height=rect.height+'px';}
-      resize(); addEventListener('resize',resize);
-      signaturePad=new SignaturePad(c,{backgroundColor:'rgba(0,0,0,0)',penColor:'#ffffff',minWidth:1,maxWidth:3});
+    function fillFormFromParams(){
+      const params=getUrlParams();
+      if(params.name){
+        document.getElementById('name').value=params.name;
+        document.getElementById('displayName').textContent=params.name+' 님';
+        document.getElementById('userInfo').style.display='block';
+      }
+      if(params.course){
+        document.getElementById('course').value=params.course;
+        document.getElementById('displayCourse').textContent=params.course;
+      }
+      if(params.phone){
+        document.getElementById('phone').value=params.phone;
+      }
+      document.getElementById('date').value=params.date||new Date().toISOString().split('T')[0];
     }
-    function showStatus(m,t='info'){const el=status;el.textContent=m;el.className=`status ${t}`;el.style.display='block';if(t!=='info')setTimeout(()=>el.style.display='none',10000);}
-    function validatePhone(v){const d=v.replace(/\D/g,'');return d.length>=10 && d.length<=11;}
+    function initSignaturePad(){
+      const canvas=document.getElementById('signaturePad');
+      function resize(){const r=Math.max(window.devicePixelRatio||1,1);const rect=canvas.getBoundingClientRect();canvas.width=rect.width*r;canvas.height=rect.height*r;canvas.getContext('2d').scale(r,r);canvas.style.width=rect.width+'px';canvas.style.height=rect.height+'px';}
+      resize(); window.addEventListener('resize',resize);
+      signaturePad=new SignaturePad(canvas,{backgroundColor:'rgba(255,255,255,0)',penColor:'#ffffff',minWidth:1,maxWidth:3,throttle:16});
+    }
+    function showStatus(m,t='info'){const el=document.getElementById('status');el.textContent=m;el.className=`status ${t}`;el.style.display='block';if(t!=='info')setTimeout(()=>el.style.display='none',10000);}
+    function validatePhone(p){const c=p.replace(/\D/g,'');return c.length>=10&&c.length<=11;}
+
+    function handleSubmit(e){
+      e.preventDefault();
+      if(!signaturePad||signaturePad.isEmpty()){alert('서명을 입력해주세요.');return;}
+      const phoneInput=document.getElementById('phone');
+      if(!validatePhone(phoneInput.value)){alert('휴대폰 번호를 정확히 입력해주세요.');phoneInput.focus();return;}
+      const name=document.getElementById('name').value.trim();
+      const course=document.getElementById('course').value.trim();
+      const date=document.getElementById('date').value;
+      const phone=phoneInput.value.replace(/\D/g,'');
+      if(!name||!course||!date){alert('모든 필수 정보를 입력해주세요.');return;}
+      if(!document.getElementById('agree').checked){alert('개인정보 수집·이용에 동의해주세요.');return;}
+
+      const submitBtn=document.getElementById('submitBtn'); submitBtn.disabled=true; submitBtn.textContent='제출 중...';
+      showStatus('서명을 제출하는 중입니다...','info');
+
+      const formData={name,phone,course,date,memo:getUrlParams().memo||'',signature:signaturePad.toDataURL('image/jpeg',0.15),submittedAt:new Date().toISOString()};
+      submitViaJsonp(formData).then(ok=>{
+        if(ok){
+          showStatus('서명이 성공적으로 제출되었습니다! 5초 후 메인으로 이동합니다.','success');
+          document.getElementById('signatureForm').style.pointerEvents='none';
+          document.getElementById('signatureForm').style.opacity='.7';
+          setTimeout(()=>location.href='index.html',5000);
+        }else{throw new Error('제출 실패');}
+      }).catch(err=>{
+        console.error(err);showStatus('서명 제출 실패: '+err.message,'error');
+      }).finally(()=>{submitBtn.disabled=false;submitBtn.textContent='제출하기';});
+    }
 
     function submitViaJsonp(formData){
       return new Promise((resolve,reject)=>{
-        if(formData.signature.length>8000){reject(new Error('서명 데이터가 너무 큽니다. 간단히 서명해주세요.'));return;}
-        const cb='submitCb_'+Date.now();
-        const to=setTimeout(()=>{cleanup();reject(new Error('서버 응답 시간 초과'));},60000);
+        if(formData.signature.length>8000){reject(new Error('서명 데이터가 너무 큽니다. 더 간단히 서명해주세요.'));return;}
+        const cb='submitCallback_'+Date.now();
+        const to=setTimeout(()=>{cleanup();reject(new Error('서버 응답 시간이 초과되었습니다.'));},60000);
         function cleanup(){clearTimeout(to);delete window[cb];const s=document.getElementById('jsonp-submit');if(s&&s.parentNode)document.head.removeChild(s);}
-        window[cb]=res=>{cleanup(); if(res&&res.ok){resolve(true);} else {reject(new Error(res?.error||'서버 오류'));}};
-        const s=document.createElement('script');
-        s.id='jsonp-submit';
-        s.src=jsonpUrl(APPS_SCRIPT_URL,{
-          action:'submitSignature',
-          name:formData.name, phone:formData.phone,
-          course:formData.course, date:formData.date, memo:formData.memo,
-          signature:formData.signature, callback:cb, _t:Date.now()
-        });
-        s.onerror=()=>{cleanup();reject(new Error('네트워크 오류'));};
-        document.head.appendChild(s);
+        window[cb]=function(result){cleanup(); if(result&&result.ok){resolve(true);} else {reject(new Error(result?.error||'서버 오류'));}};
+        const params=new URLSearchParams({action:'submitSignature',name:formData.name,phone:formData.phone,course:formData.course,date:formData.date,memo:formData.memo,signature:formData.signature,submittedAt:formData.submittedAt,callback:cb,_t:Date.now()});
+        const script=document.createElement('script'); script.id='jsonp-submit'; script.src=`${APPS_SCRIPT_URL}?${params.toString()}`;
+        script.onerror=function(){cleanup();reject(new Error('네트워크 연결 오류'));};
+        document.head.appendChild(script);
       });
     }
 
     document.addEventListener('DOMContentLoaded',()=>{
-      fillForm(); setTimeout(initPad,100);
+      fillFormFromParams();
+      setTimeout(initSignaturePad,100);
       document.getElementById('clearBtn').addEventListener('click',()=>signaturePad&&signaturePad.clear());
-      document.getElementById('signatureForm').addEventListener('submit',e=>{
-        e.preventDefault();
-        if(!signaturePad || signaturePad.isEmpty()){alert('서명을 입력해주세요.');return;}
-        if(!validatePhone(phone.value)){alert('휴대폰 번호를 정확히 입력해주세요.');phone.focus();return;}
-        if(!agree.checked){alert('개인정보 수집·이용에 동의해주세요.');return;}
-
-        const fd={name:name.value.trim(),phone:phone.value.replace(/\D/g,''),course:course.value.trim(),date:date.value,memo:getUrlParams().memo||'',signature:signaturePad.toDataURL('image/jpeg',0.15)};
-        submitBtn.disabled=true; submitBtn.textContent='제출 중...'; showStatus('제출 중입니다...','info');
-        submitViaJsonp(fd).then(()=>{showStatus('제출 완료! 5초 후 메인으로 이동합니다.','success');signatureForm.style.pointerEvents='none';signatureForm.style.opacity='.7';setTimeout(()=>location.href='index.html',5000);})
-        .catch(err=>{console.error(err);showStatus('제출 실패: '+err.message,'error');})
-        .finally(()=>{submitBtn.disabled=false;submitBtn.textContent='제출하기';});
-      });
+      document.getElementById('signatureForm').addEventListener('submit',handleSubmit);
+      window.addEventListener('beforeunload',e=>{if(signaturePad&&!signaturePad.isEmpty()){e.preventDefault();e.returnValue='';}});
     });
   </script>
 </body>
 </html>
-
-
-
