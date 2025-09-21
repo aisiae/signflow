@@ -47,7 +47,7 @@
   </style>
 </head>
 <body>
-  <a href="index.html" class="back-link">← 메인 페이지</a>
+  <a href="/" class="back-link">← 메인 페이지</a>
 
   <div class="container">
     <div class="card">
@@ -171,6 +171,7 @@
   </div>
 
   <script>
+    // 실제 배포된 Apps Script URL로 변경 필요
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxV8keehsbecLCI5J5KZgVuzLEXWt41kRscdGwXx9uuhHLQJBA8NLTbPUBCVw4GxaDe1g/exec';
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -180,8 +181,9 @@
       if (!document.getElementById('startDate').value) document.getElementById('startDate').value = today;
       if (!document.getElementById('endDate').value) document.getElementById('endDate').value = today;
       
-      const base = window.location.origin + window.location.pathname.replace('admin_temp.html', 'index.html');
-      document.getElementById('mainUrl').textContent = base;
+      // 메인 URL을 루트 경로로 올바르게 설정
+      const mainUrl = window.location.origin + '/';
+      document.getElementById('mainUrl').textContent = mainUrl;
       
       // 자동으로 현재 명단 로드
       loadCurrentRoster();
@@ -604,4 +606,3 @@
   </script>
 </body>
 </html>
-
