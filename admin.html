@@ -3,36 +3,51 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>교육 명단 관리 시스템</title>
+  <title>교육 명단 관리</title>
   <style>
     :root{--bg:#0b0d12;--card:#121620;--muted:#94a3b8;--border:#233046;--ink:#e5e7eb;--primary:#1d4ed8;--success:#10b981;--warning:#f59e0b;--error:#ef4444}
     *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,'Noto Sans KR',sans-serif;padding:20px}
-    .container{max-width:900px;margin:0 auto}.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px;margin-bottom:24px;box-shadow:0 10px 25px rgba(0,0,0,.2)}
-    h1{margin:0 0 8px}.subtitle{color:var(--muted);margin-bottom:32px}
+    .container{max-width:800px;margin:0 auto}.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px;margin-bottom:24px;box-shadow:0 10px 25px rgba(0,0,0,.2)}
+    h1{margin:0 0 8px;color:var(--ink)}.subtitle{color:var(--muted);margin-bottom:32px}
     .form-group{margin-bottom:20px}.form-row{display:grid;gap:16px;grid-template-columns:1fr 1fr}@media(max-width:768px){.form-row{grid-template-columns:1fr}}
-    label{display:block;font-weight:600;margin-bottom:8px}
-    input[type="text"],input[type="date"],textarea{width:100%;padding:12px 16px;border-radius:10px;border:1px solid var(--border);background:#0f1320;color:var(--ink);font-size:16px}
-    textarea{min-height:150px;resize:vertical}
+    label{display:block;font-weight:600;margin-bottom:8px;color:var(--ink)}
+    input[type="text"],input[type="date"],textarea{width:100%;padding:12px 16px;border-radius:10px;border:1px solid var(--border);background:#0f1320;color:var(--ink);font-size:16px;font-family:inherit;transition:border-color .3s}
+    textarea{min-height:150px;resize:vertical} input:focus,textarea:focus{outline:none;border-color:var(--primary)}
     .btn{border:1px solid var(--border);background:#101826;color:var(--ink);padding:12px 24px;border-radius:10px;cursor:pointer;font-size:16px;font-weight:500;transition:.3s;text-decoration:none;display:inline-flex;align-items:center;gap:8px;margin-right:12px;margin-bottom:8px}
-    .btn:hover{background:#1a2332;border-color:var(--primary)}.btn.primary{border-color:#2563eb;background:var(--primary)}.btn.primary:hover{background:#1e40af}.btn.warning{border-color:var(--warning);background:var(--warning);color:#000}.btn:disabled{opacity:.6;cursor:not-allowed}
+    .btn:hover{background:#1a2332;border-color:var(--primary)}.btn.primary{border-color:#2563eb;background:var(--primary)}.btn.primary:hover{background:#1e40af}
+    .btn.success{border-color:var(--success);background:var(--success);color:#000}.btn.warning{border-color:var(--warning);background:var(--warning);color:#000}
+    .btn.pdf{border-color:#8b5cf6;background:#8b5cf6;color:#fff}.btn.pdf:hover{background:#7c3aed}
+    .btn:disabled{opacity:.6;cursor:not-allowed}
     .status{padding:12px 16px;border-radius:8px;margin:16px 0;font-weight:500;display:none}
-    .status.success{background:rgba(16,185,129,.2);color:#10b981;border:1px solid #10b981}
-    .status.error{background:rgba(239,68,68,.2);color:#ef4444;border:1px solid #ef4444}
-    .status.info{background:rgba(29,78,216,.2);color:#1d4ed8;border:1px solid #1d4ed8}
+    .status.success{background:rgba(16,185,129,.2);color:var(--success);border:1px solid var(--success)}
+    .status.error{background:rgba(239,68,68,.2);color:var(--error);border:1px solid var(--error)}
+    .status.info{background:rgba(29,78,216,.2);color:var(--primary);border:1px solid var(--primary)}
+    .back-link{position:fixed;top:20px;left:20px;color:var(--muted);text-decoration:none;font-size:14px;padding:8px 12px;border:1px solid var(--border);border-radius:6px;background:var(--card);transition:.3s}
+    .back-link:hover{color:var(--ink);border-color:var(--primary)} .help-text{font-size:14px;color:var(--muted);margin-top:4px}
     .url-box{background:#0f1320;border:2px solid var(--primary);border-radius:12px;padding:20px;margin-top:20px;text-align:center}
     .main-url{font-family:'Courier New',monospace;font-size:18px;font-weight:bold;color:var(--primary);word-break:break-all;margin-bottom:12px}
-    table{width:100%;border-collapse:collapse}th,td{padding:8px;border-bottom:1px solid var(--border)}
+    .copy-btn{padding:8px 16px;background:var(--primary);border:none;border-radius:6px;color:#fff;cursor:pointer;font-weight:500;transition:.3s}
+    .copy-btn:hover{background:#1e40af}
+    .feature-box{background:#0a0f19;border:1px solid var(--border);border-radius:10px;padding:16px;margin-top:20px}
+    .feature-title{font-weight:600;color:var(--success);margin-bottom:8px}
+    .loading-spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-radius:50%;border-top-color:var(--primary);animation:spin 1s ease-in-out infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .pdf-section{background:#1a1f2e;border:2px solid #8b5cf6;border-radius:12px;padding:24px;margin-top:24px;text-align:center}
+    .pdf-title{color:#8b5cf6;font-size:20px;font-weight:600;margin-bottom:12px}
+    .pdf-desc{color:var(--muted);margin-bottom:20px;line-height:1.6}
+    .pdf-result{margin-top:16px;padding:16px;background:#0f1320;border-radius:8px;display:none}
+    .pdf-link{color:#8b5cf6;text-decoration:none;font-weight:600;font-size:18px}
+    .pdf-link:hover{color:#a855f7}
   </style>
 </head>
 <body>
-  <a href="index.html" class="btn" style="position:fixed;top:16px;left:16px;">← 메인</a>
+  <a href="index.html" class="back-link">← 메인 페이지</a>
 
   <div class="container">
     <div class="card">
       <h1>교육 명단 관리 시스템</h1>
-      <p class="subtitle">명단 등록 → 주소 공유 → 참여자 서명 수집 → PDF 생성까지</p>
+      <p class="subtitle">교육 정보와 참여자 명단을 등록하면 메인 페이지에서 바로 사용할 수 있습니다.</p>
 
-      <!-- 명단 등록 -->
       <form id="rosterForm">
         <div class="form-row">
           <div class="form-group">
@@ -42,157 +57,171 @@
           <div class="form-group">
             <label for="date">교육일정 *</label>
             <input type="date" id="date" required>
+            <div class="help-text">교육이 예정된 날짜를 선택해주세요</div>
           </div>
         </div>
+
         <div class="form-group">
-          <label for="memo">메모 (선택)</label>
-          <input type="text" id="memo" placeholder="예: 2차수, 오후반">
+          <label for="memo">메모 (선택사항)</label>
+          <input type="text" id="memo" placeholder="예: 1차수, 오후반">
         </div>
+
         <div class="form-group">
           <label for="names">참여자 명단 *</label>
-          <textarea id="names" placeholder="홍길동,김철수,이영희 또는 줄바꿈으로 한 줄에 한 명" required></textarea>
+          <textarea id="names" placeholder="홍길동,김철수,이영희&#10;또는&#10;홍길동&#10;김철수&#10;이영희&#10;&#10;콤마(,)로 구분하거나 한 줄에 한 명씩 입력해주세요" required></textarea>
         </div>
+
         <div style="text-align:center;">
-          <button type="submit" class="btn primary" id="saveBtn"><span id="saveText">명단 등록하기</span><span id="saveSpinner" style="display:none;">⏳</span></button>
+          <button type="submit" class="btn primary" id="saveBtn">
+            <span id="saveText">명단 등록하기</span>
+            <span id="saveSpinner" class="loading-spinner" style="display:none;"></span>
+          </button>
           <button type="button" class="btn" id="clearBtn">초기화</button>
         </div>
+
         <div id="status" class="status"></div>
       </form>
 
-      <!-- 메인 주소 -->
       <div class="url-box">
         <div class="main-url" id="mainUrl"></div>
-        <button class="btn primary" onclick="copyMainUrl()">메인 주소 복사</button>
+        <button class="copy-btn" onclick="copyMainUrl()">메인 주소 복사</button>
+        <div class="help-text" style="margin-top:12px;">명단 등록 후 위 주소를 참여자들에게 공유하세요</div>
       </div>
 
-      <!-- 서명 확인 & PDF -->
-      <div style="margin-top:24px;">
-        <h3>🖊️ 제출된 서명 확인 / PDF 생성</h3>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="sigCourse">교육명(선택)</label>
-            <input type="text" id="sigCourse" placeholder="예: AI 관리자 교육">
-          </div>
-          <div class="form-group">
-            <label for="sigDate">이수일자(선택)</label>
-            <input type="date" id="sigDate">
-          </div>
+      <!-- PDF 생성 섹션 -->
+      <div class="pdf-section">
+        <div class="pdf-title">📄 서명 모음집 PDF 생성</div>
+        <div class="pdf-desc">
+          교육이 완료되고 참여자들이 서명을 완료한 후,<br>
+          모든 서명을 하나의 PDF 문서로 통합해서 다운로드할 수 있습니다.
         </div>
-        <div style="text-align:right;margin-bottom:12px;">
-          <button class="btn" id="loadSignaturesBtn">최신 서명 보기</button>
-          <button class="btn warning" id="pdfBtn">PDF 생성(한 문서로 취합)</button>
+        <button type="button" class="btn pdf" id="pdfBtn">
+          <span id="pdfText">📋 서명 모음집 PDF 생성</span>
+          <span id="pdfSpinner" class="loading-spinner" style="display:none;"></span>
+        </button>
+        <div class="help-text" style="margin-top:12px;">현재 등록된 교육의 서명 데이터를 기준으로 PDF를 생성합니다</div>
+        
+        <div id="pdfResult" class="pdf-result">
+          <div style="margin-bottom:12px;">✅ PDF 생성이 완료되었습니다!</div>
+          <a id="pdfDownloadLink" href="#" target="_blank" class="pdf-link">📄 PDF 다운로드</a>
+          <div id="pdfStats" class="help-text" style="margin-top:8px;"></div>
         </div>
-        <div id="sigStatus" class="status" style="display:none;"></div>
-        <div style="overflow:auto;">
-          <table id="sigTable">
-            <thead><tr style="color:#94a3b8;"><th>제출시간</th><th>이름</th><th>휴대폰</th><th>교육명</th><th>이수일자</th><th>메모</th><th>이미지</th></tr></thead>
-            <tbody></tbody>
-          </table>
+      </div>
+
+      <div class="feature-box">
+        <div class="feature-title">📋 사용 방법</div>
+        <div class="help-text">
+          1) 교육 정보와 참여자 명단 입력 → "명단 등록하기"<br>
+          2) 메인 주소 공유 → 참여자가 본인 이름 클릭 후 서명<br>
+          3) 서명 완료 후 → "서명 모음집 PDF 생성" 클릭<br>
+          4) 생성된 PDF 파일 다운로드 → 보관 및 관리
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxqFUwh7rcpRN0VzFBeGaoLtpq1_g3nsAElA8kOj-fivyp7xZ2m6v7vl7z7xt7TDciF/exec';
-    function jsonpUrl(base, params){const qs=new URLSearchParams(params).toString();return base+(base.includes('?')?'&':'?')+qs;}
+    // 👇 새로 배포한 Apps Script WebApp URL
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwmGf8uazm4IfaVKFn8qV8YYltsxwZwuCqaG_lWYJeq6PlUxvElDP7SBt-XszOrJEVbyA/exec';
 
-    // 엘리먼트 캐시
-    const els = {
-      courseEl: document.getElementById('course'),
-      dateEl: document.getElementById('date'),
-      memoEl: document.getElementById('memo'),
-      namesEl: document.getElementById('names'),
-      rosterForm: document.getElementById('rosterForm'),
-      saveBtn: document.getElementById('saveBtn'),
-      saveText: document.getElementById('saveText'),
-      saveSpinner: document.getElementById('saveSpinner'),
-      status: document.getElementById('status'),
-      mainUrl: document.getElementById('mainUrl'),
-      clearBtn: document.getElementById('clearBtn'),
-      sigCourseEl: document.getElementById('sigCourse'),
-      sigDateEl: document.getElementById('sigDate'),
-      loadSignaturesBtn: document.getElementById('loadSignaturesBtn'),
-      pdfBtn: document.getElementById('pdfBtn'),
-      sigStatus: document.getElementById('sigStatus'),
-      sigTableBody: document.querySelector('#sigTable tbody'),
-    };
-
-    // 초기 세팅
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', ()=>{
       const today=new Date().toISOString().split('T')[0];
-      if(!els.dateEl.value) els.dateEl.value=today;
-      const base=location.origin+location.pathname.replace('admin.html','index.html');
-      els.mainUrl.textContent=base;
+      if(!document.getElementById('date').value) document.getElementById('date').value=today;
+      const base=window.location.origin+window.location.pathname.replace('admin.html','index.html');
+      document.getElementById('mainUrl').textContent=base;
     });
 
-    function showStatus(msg,type='info'){els.status.textContent=msg;els.status.className=`status ${type}`;els.status.style.display='block';if(type!=='info')setTimeout(()=>els.status.style.display='none',8000);}
-    function setLoading(on){els.saveBtn.disabled=on;els.saveText.style.display=on?'none':'inline';els.saveSpinner.style.display=on?'inline':'none';}
-    function copyMainUrl(){const url=els.mainUrl.textContent;navigator.clipboard?.writeText(url).then(()=>showStatus('메인 주소 복사 완료','success')).catch(()=>showStatus('복사 실패. 수동 복사해주세요.','error'));}
+    function showStatus(m,t='info'){const el=document.getElementById('status');el.textContent=m;el.className=`status ${t}`;el.style.display='block';if(t==='success'||t==='error'){setTimeout(()=>el.style.display='none',8000);}}
+    function hideStatus(){document.getElementById('status').style.display='none';}
+    function setLoading(b){const btn=document.getElementById('saveBtn');const text=document.getElementById('saveText');const sp=document.getElementById('saveSpinner');btn.disabled=b;text.style.display=b?'none':'inline';sp.style.display=b?'inline-block':'none';}
+    function setPdfLoading(b){const btn=document.getElementById('pdfBtn');const text=document.getElementById('pdfText');const sp=document.getElementById('pdfSpinner');btn.disabled=b;text.style.display=b?'none':'inline';sp.style.display=b?'inline-block':'none';}
 
-    // 명단 등록
-    els.rosterForm.addEventListener('submit',(e)=>{
+    function handleSubmit(e){
       e.preventDefault();
-      const courseV = els.courseEl.value.trim();
-      const dateV   = els.dateEl.value;
-      const memoV   = els.memoEl.value.trim();
-      const namesText = els.namesEl.value.trim();
-      if(!courseV||!dateV||!namesText){showStatus('교육명/일정/명단을 모두 입력해주세요.','error');return;}
-      const list=(namesText.includes(',')?namesText.split(','):namesText.split('\n')).map(s=>s.trim()).filter(Boolean);
-      if(!list.length){showStatus('참여자 명단 형식을 확인해주세요.','error');return;}
+      const course=document.getElementById('course').value.trim();
+      const date=document.getElementById('date').value;
+      const memo=document.getElementById('memo').value.trim();
+      const namesText=document.getElementById('names').value.trim();
+      if(!course||!date||!namesText){showStatus('교육명, 교육일정, 참여자 명단을 모두 입력해주세요.','error');return;}
+      const names=(namesText.includes(',')?namesText.split(','):namesText.split('\n')).map(n=>n.trim()).filter(Boolean);
+      if(!names.length){showStatus('올바른 참여자 명단을 입력해주세요.','error');return;}
 
       setLoading(true); showStatus('명단을 등록하는 중...','info');
-      const cb='saveRosterCb_'+Date.now(); const to=setTimeout(()=>{cleanup();showStatus('응답 시간 초과','error');},30000);
-      function cleanup(){clearTimeout(to);delete window[cb];const s=document.getElementById('save-jsonp');if(s&&s.parentNode)s.parentNode.removeChild(s);setLoading(false);}
-      window[cb]=(res)=>{try{if(res&&res.ok){showStatus(`등록 완료 (${list.length}명)`,'success');els.namesEl.value='';}else{throw new Error(res?.error||'명단 등록 실패');}}catch(err){showStatus('오류: '+err.message,'error');}finally{cleanup();}};
+      const cb='saveRosterCallback_'+Date.now(); const to=setTimeout(()=>{showStatus('서버 응답 시간이 초과되었습니다.','error');cleanup();},30000);
+      function cleanup(){clearTimeout(to);delete window[cb];const s=document.getElementById('save-jsonp-script');if(s&&s.parentNode)document.head.removeChild(s);setLoading(false);}
+      window[cb]=function(result){try{if(result&&result.ok){showStatus(`명단이 등록되었습니다! (${names.length}명)`,`success`);document.getElementById('names').value='';}else{throw new Error(result?.error||'명단 등록 실패');}}catch(err){showStatus('명단 등록 실패: '+err.message,'error');}finally{cleanup();}};
+      const params=new URLSearchParams({action:'saveRoster',course,date,memo,names:names.join(','),callback:cb,_t:Date.now()});
+      const s=document.createElement('script'); s.id='save-jsonp-script'; s.src=`${APPS_SCRIPT_URL}?${params.toString()}`; s.onerror=function(){showStatus('서버 연결 오류','error');cleanup();}; document.head.appendChild(s);
+    }
+
+    function generatePDF(){
+      const course=document.getElementById('course').value.trim();
+      const date=document.getElementById('date').value;
+      const memo=document.getElementById('memo').value.trim();
+      
+      if(!course||!date){
+        showStatus('교육명과 교육일정을 먼저 입력해주세요.','error');
+        return;
+      }
+
+      setPdfLoading(true);
+      showStatus('서명 모음집 PDF를 생성하는 중... (최대 1분 소요)','info');
+      document.getElementById('pdfResult').style.display='none';
+
+      const cb='generatePDFCallback_'+Date.now();
+      const to=setTimeout(()=>{
+        showStatus('PDF 생성 시간이 초과되었습니다. 다시 시도해주세요.','error');
+        cleanup();
+      },90000); // PDF 생성은 시간이 더 걸릴 수 있음
+
+      function cleanup(){
+        clearTimeout(to);
+        delete window[cb];
+        const s=document.getElementById('pdf-jsonp-script');
+        if(s&&s.parentNode)document.head.removeChild(s);
+        setPdfLoading(false);
+      }
+
+      window[cb]=function(result){
+        try{
+          if(result&&result.ok){
+            showStatus(`PDF 생성 완료! (${result.participantCount}명의 서명 포함)`,'success');
+            document.getElementById('pdfDownloadLink').href=result.pdfUrl;
+            document.getElementById('pdfStats').textContent=`파일명: ${result.fileName} | 참여자: ${result.participantCount}명`;
+            document.getElementById('pdfResult').style.display='block';
+          }else{
+            throw new Error(result?.error||'PDF 생성 실패');
+          }
+        }catch(err){
+          showStatus('PDF 생성 실패: '+err.message,'error');
+        }finally{
+          cleanup();
+        }
+      };
+
+      const params=new URLSearchParams({
+        action:'generatePDF',
+        course,
+        date,
+        memo,
+        callback:cb,
+        _t:Date.now()
+      });
+
       const s=document.createElement('script');
-      s.id='save-jsonp';
-      s.src=jsonpUrl(APPS_SCRIPT_URL,{action:'saveRoster',course:courseV,date:dateV,memo:memoV,names:list.join(','),callback:cb,_t:Date.now()});
-      s.onerror=()=>{cleanup();showStatus('서버 연결 오류','error');};
+      s.id='pdf-jsonp-script';
+      s.src=`${APPS_SCRIPT_URL}?${params.toString()}`;
+      s.onerror=function(){showStatus('서버 연결 오류','error');cleanup();};
       document.head.appendChild(s);
-    });
+    }
 
-    // 초기화
-    els.clearBtn.addEventListener('click',()=>{els.courseEl.value='';els.dateEl.value=new Date().toISOString().split('T')[0];els.memoEl.value='';els.namesEl.value='';els.status.style.display='none';});
+    function clearForm(){document.getElementById('course').value='';document.getElementById('date').value=new Date().toISOString().split('T')[0];document.getElementById('memo').value='';document.getElementById('names').value='';hideStatus();document.getElementById('pdfResult').style.display='none';}
+    function copyMainUrl(){const url=document.getElementById('mainUrl').textContent; if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(url).then(()=>showStatus('메인 주소가 복사되었습니다.','success')).catch(()=>fallback(url));} else {fallback(url);} }
+    function fallback(text){const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';document.body.appendChild(ta);ta.focus();ta.select();try{document.execCommand('copy')?showStatus('메인 주소가 복사되었습니다.','success'):showStatus('복사 실패. 수동 복사해주세요.','error');}catch(e){showStatus('복사 실패. 수동 복사해주세요.','error');}document.body.removeChild(ta);}
 
-    // 서명 목록 보기
-    els.loadSignaturesBtn.addEventListener('click',()=>{
-      const courseV=els.sigCourseEl.value.trim(); const dateV=els.sigDateEl.value; const st=els.sigStatus;
-      st.textContent='불러오는 중...'; st.className='status info'; st.style.display='block';
-      const cb='sigCb_'+Date.now(); const to=setTimeout(()=>{cleanup();st.textContent='응답 시간 초과';st.className='status error';},30000);
-      function cleanup(){clearTimeout(to);delete window[cb];const s=document.getElementById('jsonp-sigs');if(s&&s.parentNode)s.parentNode.removeChild(s);}
-      window[cb]=(res)=>{cleanup(); try{
-        if(!res||!res.ok) throw new Error(res?.error||'가져오기 실패');
-        els.sigTableBody.innerHTML='';
-        (res.items||[]).forEach(it=>{
-          const tr=document.createElement('tr');
-          const td=t=>{const e=document.createElement('td');e.textContent=t||'';return e;};
-          tr.appendChild(td(it.time?new Date(it.time).toLocaleString():'')); tr.appendChild(td(it.name)); tr.appendChild(td(it.phone));
-          tr.appendChild(td(it.course)); tr.appendChild(td(it.date)); tr.appendChild(td(it.memo));
-          const linkTd=document.createElement('td');
-          if(it.url){const a=document.createElement('a');a.href=it.url;a.target='_blank';a.textContent='열기';a.className='btn';a.style.padding='6px 10px';linkTd.appendChild(a);} else {linkTd.textContent='-';}
-          tr.appendChild(linkTd); els.sigTableBody.appendChild(tr);
-        });
-        st.textContent=`총 ${res.total}건 중 ${(res.items||[]).length}건 표시`; st.className='status success';
-      }catch(e){st.textContent='오류: '+e.message;st.className='status error';}};
-      const params={action:'getSignatures',limit:'200',callback:cb,_t:Date.now()};
-      if(courseV) params.course=courseV; if(dateV) params.date=dateV;
-      const s=document.createElement('script'); s.id='jsonp-sigs';
-      s.src=jsonpUrl(APPS_SCRIPT_URL, params);
-      s.onerror=()=>{cleanup();st.textContent='서버 연결 오류';st.className='status error';};
-      document.head.appendChild(s);
-    });
-
-    // PDF 생성
-    els.pdfBtn.addEventListener('click',()=>{
-      const courseV=els.sigCourseEl.value.trim(); const dateV=els.sigDateEl.value;
-      const params={action:'pdf',_t:Date.now()}; if(courseV) params.course=courseV; if(dateV) params.date=dateV;
-      const url=jsonpUrl(APPS_SCRIPT_URL, params);
-      const w=window.open(url,'_blank');
-      if(!w){els.sigStatus.textContent='팝업 차단을 해제하고 다시 시도해주세요.';els.sigStatus.className='status error';els.sigStatus.style.display='block';}
-    });
+    document.getElementById('rosterForm').addEventListener('submit',handleSubmit);
+    document.getElementById('clearBtn').addEventListener('click',clearForm);
+    document.getElementById('pdfBtn').addEventListener('click',generatePDF);
   </script>
 </body>
 </html>
-
-
