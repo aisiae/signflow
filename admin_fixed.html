@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>교육 명단 관리</title>
+  <style>
+    :root{--bg:#0b0d12;--card:#121620;--muted:#94a3b8;--border:#233046;--ink:#e5e7eb;--primary:#1d4ed8;--success:#10b981;--warning:#f59e0b;--error:#ef4444}
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,'Noto Sans KR',sans-serif;padding:20px}
+    .container{max-width:800px;margin:0 auto}.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px;margin-bottom:24px;box-shadow:0 10px 25px rgba(0,0,0,.2)}
+    h1{margin:0 0 8px;color:var(--ink)}.subtitle{color:var(--muted);margin-bottom:32px}
+    .form-group{margin-bottom:20px}.form-row{display:grid;gap:16px;grid-template-columns:1fr 1fr}@media(max-width:768px){.form-row{grid-template-columns:1fr}}
+    label{display:block;font-weight:600;margin-bottom:8px;color:var(--ink)}
+    input[type="text"],input[type="date"],textarea{width:100%;padding:12px 16px;border-radius:10px;border:1px solid var(--border);background:#0f1320;color:var(--ink);font-size:16px;font-family:inherit;transition:border-color .3s}
+    textarea{min-height:150px;resize:vertical} input:focus,textarea:focus{outline:none;border-color:var(--primary)}
+    .btn{border:1px solid var(--border);background:#101826;color:var(--ink);padding:12px 24px;border-radius:10px;cursor:pointer;font-size:16px;font-weight:500;transition:.3s;text-decoration:none;display:inline-flex;align-items:center;gap:8px;margin-right:12px;margin-bottom:8px}
+    .btn:hover{background:#1a2332;border-color:var(--primary)}.btn.primary{border-color:#2563eb;background:var(--primary)}.btn.primary:hover{background:#1e40af}
+    .btn.success{border-color:var(--success);background:var(--success);color:#000}.btn.warning{border-color:var(--warning);background:var(--warning);color:#000}.btn:disabled{opacity:.6;cursor:not-allowed}
+    .status{padding:12px 16px;border-radius:8px;margin:16px 0;font-weight:500;display:none}
+    .status.success{background:rgba(16,185,129,.2);color:var(--success);border:1px solid var(--success)}
+    .status.error{background:rgba(239,68,68,.2);color:var(--error);border:1px solid var(--error)}
+    .status.info{background:rgba(29,78,216,.2);color:var(--primary);border:1px solid var(--primary)}
+    .back-link{position:fixed;top:20px;left:20px;color:var(--muted);text-decoration:none;font-size:14px;padding:8px 12px;border:1px solid var(--border);border-radius:6px;background:var(--card);transition:.3s}
+    .back-link:hover{color:var(--ink);border-color:var(--primary)} .help-text{font-size:14px;color:var(--muted);margin-top:4px}
+    .url-box{background:#0f1320;border:2px solid var(--primary);border-radius:12px;padding:20px;margin-top:20px;text-align:center}
+    .main-url{font-family:'Courier New',monospace;font-size:18px;font-weight:bold;color:var(--primary);word-break:break-all;margin-bottom:12px}
+    .copy-btn{padding:8px 16px;background:var(--primary);border:none;border-radius:6px;color:#fff;cursor:pointer;font-weight:500;transition:.3s}
+    .copy-btn:hover{background:#1e40af}
+    .feature-box{background:#0a0f19;border:1px solid var(--border);border-radius:10px;padding:16px;margin-top:20px}
+    .feature-title{font-weight:600;color:var(--success);margin-bottom:8px}
+    .loading-spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-radius:50%;border-top-color:var(--primary);animation:spin 1s ease-in-out infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .report-section{background:#0a0f19;border:2px solid var(--success);border-radius:12px;padding:20px;margin-top:20px}
+    .report-title{font-weight:600;color:var(--success);margin-bottom:16px;font-size:18px}
+    .date-range{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:end;margin-bottom:16px}
+    .date-range .separator{color:var(--muted);font-weight:bold;padding-bottom:12px}
+    @media(max-width:600px){.date-range{grid-template-columns:1fr;gap:8px;text-align:center}.date-range .separator{display:none}}
+  </style>
+</head>
+<body>
+  <a href="index.html" class="back-link">← 메인 페이지</a>
+
+  <div class="container">
+    <div class="card">
+      <h1>교육 명단 관리 시스템</h1>
+      <p class="subtitle">교육 정보와 참여자 명단을 등록하면 메인 페이지에서 바로 사용할 수 있습니다.</p>
+
+      <form id="rosterForm">
+        <div class="form-group">
+          <label for="course">교육명 *</label>
+          <input type="text" id="course" placeholder="예: AI 관리자 교육" required>
+        </div>
+
+        <div class="form-group">
+          <label>교육일정 *</label>
+          <div class="date-range">
+            <div>
+              <input type="date" id="startDate" required>
+              <div class="help-text">교육 시작일</div>
+            </div>
+            <div class="separator">~</div>
+            <div>
+              <input type="date" id="endDate" required>
+              <div class="help-text">교육 종료일</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="memo">메모 (선택사항)</label>
+          <input type="text" id="memo" placeholder="예: 1차수, 오후반">
+        </div>
+
+        <div class="form-group">
+          <label for="names">참여자 명단 *</label>
+          <textarea id="names" placeholder="홍길동,김철수,이영희&#10;또는&#10;홍길동&#10;김철수&#10;이영희&#10;&#10;콤마(,)로 구분하거나 한 줄에 한 명씩 입력해주세요" required></textarea>
+        </div>
+
+        <div style="text-align:center;">
+          <button type="submit" class="btn primary" id="saveBtn">
+            <span id="saveText">명단 등록하기</span>
+            <span id="saveSpinner" class="loading-spinner" style="display:none;"></span>
+          </button>
+          <button type="button" class="btn" id="clearBtn">초기화</button>
+        </div>
+
+        <div id="status" class="status"></div>
+      </form>
+
+      <div class="url-box">
+        <div class="main-url" id="mainUrl"></div>
+        <button class="copy-btn" onclick="copyMainUrl()">메인 주소 복사</button>
+        <div class="help-text" style="margin-top:12px;">명단 등록 후 위 주소를 참여자들에게 공유하세요</div>
+      </div>
+
+      <!-- 서명 현황 보고서 생성 섹션 -->
+      <div class="report-section">
+        <div class="report-title">📊 서명 현황 보고서 생성</div>
+        <p class="help-text" style="margin-bottom:16px;">등록된 교육에 대한 서명 현황을 스프레드시트로 생성합니다.</p>
+        
+        <div class="form-group">
+          <label for="reportCourse">교육명 *</label>
+          <input type="text" id="reportCourse" placeholder="보고서를 생성할 교육명을 입력하세요" required>
+        </div>
+
+        <div class="form-group">
+          <label>교육일정 *</label>
+          <div class="date-range">
+            <div>
+              <input type="date" id="reportStartDate" required>
+              <div class="help-text">교육 시작일</div>
+            </div>
+            <div class="separator">~</div>
+            <div>
+              <input type="date" id="reportEndDate" required>
+              <div class="help-text">교육 종료일</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="text-align:center;">
+          <button type="button" class="btn success" id="generateReportBtn">
+            <span id="reportText">보고서 생성</span>
+            <span id="reportSpinner" class="loading-spinner" style="display:none;"></span>
+          </button>
+        </div>
+
+        <div id="reportStatus" class="status"></div>
+      </div>
+
+      <div class="feature-box">
+        <div class="feature-title">📋 사용 방법</div>
+        <div class="help-text">
+          1) 교육 정보와 참여자 명단 입력 → "명단 등록하기"<br>
+          2) 메인 주소 공유 → 참여자가 본인 이름 클릭 후 서명<br>
+          3) 서명 완료 후 "보고서 생성"으로 현황 확인<br>
+          4) 생성된 스프레드시트에서 서명 링크 및 완료 현황 확인
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw5loflVBcAZDyOsA-c2BmgarifK45TXqYDcNkOSkMYeXqkLr3Fw3Q7cAhi74lPFr4TPA/exec';
+
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('페이지 로딩 완료');
+      
+      const today = new Date().toISOString().split('T')[0];
+      if (!document.getElementById('startDate').value) document.getElementById('startDate').value = today;
+      if (!document.getElementById('endDate').value) document.getElementById('endDate').value = today;
+      
+      const base = window.location.origin + window.location.pathname.replace('admin_fixed.html', 'index.html');
+      document.getElementById('mainUrl').textContent = base;
+    });
+
+    function showStatus(m, t = 'info') {
+      const el = document.getElementById('status');
+      el.textContent = m;
+      el.className = `status ${t}`;
+      el.style.display = 'block';
+      if (t === 'success' || t === 'error') {
+        setTimeout(() => el.style.display = 'none', 8000);
+      }
+    }
+
+    function showReportStatus(m, t = 'info') {
+      const el = document.getElementById('reportStatus');
+      el.textContent = m;
+      el.className = `status ${t}`;
+      el.style.display = 'block';
+      if (t === 'success' || t === 'error') {
+        setTimeout(() => el.style.display = 'none', 10000);
+      }
+    }
+
+    function setLoading(b) {
+      const btn = document.getElementById('saveBtn');
+      const text = document.getElementById('saveText');
+      const sp = document.getElementById('saveSpinner');
+      btn.disabled = b;
+      text.style.display = b ? 'none' : 'inline';
+      sp.style.display = b ? 'inline-block' : 'none';
+    }
+
+    function setReportLoading(b) {
+      const btn = document.getElementById('generateReportBtn');
+      const text = document.getElementById('reportText');
+      const sp = document.getElementById('reportSpinner');
+      btn.disabled = b;
+      text.style.display = b ? 'none' : 'inline';
+      sp.style.display = b ? 'inline-block' : 'none';
+    }
+
+    document.getElementById('rosterForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      console.log('폼 제출 이벤트 발생');
+      
+      const course = document.getElementById('course').value.trim();
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+      const memo = document.getElementById('memo').value.trim();
+      const namesText = document.getElementById('names').value.trim();
+      
+      console.log('입력 데이터:', { course, startDate, endDate, memo, namesText });
+      
+      if (!course || !startDate || !endDate || !namesText) {
+        showStatus('교육명, 교육일정, 참여자 명단을 모두 입력해주세요.', 'error');
+        return;
+      }
+      
+      if (new Date(startDate) > new Date(endDate)) {
+        showStatus('교육 시작일이 종료일보다 늦을 수 없습니다.', 'error');
+        return;
+      }
+      
+      const names = (namesText.includes(',') ? namesText.split(',') : namesText.split('\n'))
+        .map(n => n.trim()).filter(Boolean);
+      
+      if (!names.length) {
+        showStatus('올바른 참여자 명단을 입력해주세요.', 'error');
+        return;
+      }
+
+      console.log('처리된 참여자:', names);
+
+      setLoading(true);
+      showStatus('명단을 등록하는 중...', 'info');
+      
+      const cb = 'saveRosterCallback_' + Date.now();
+      const timeout = setTimeout(() => {
+        showStatus('서버 응답 시간이 초과되었습니다.', 'error');
+        cleanup();
+      }, 30000);
+      
+      function cleanup() {
+        clearTimeout(timeout);
+        delete window[cb];
+        const script = document.getElementById('save-jsonp-script');
+        if (script && script.parentNode) {
+          document.head.removeChild(script);
+        }
+        setLoading(false);
+      }
+      
+      window[cb] = function(result) {
+        console.log('서버 응답:', result);
+        try {
+          if (result && result.ok) {
+            showStatus(`명단이 등록되었습니다! (${names.length}명)`, 'success');
+            document.getElementById('names').value = '';
+            fillReportFields();
+          } else {
+            throw new Error(result?.error || '명단 등록 실패');
+          }
+        } catch (err) {
+          console.error('처리 오류:', err);
+          showStatus('명단 등록 실패: ' + err.message, 'error');
+        } finally {
+          cleanup();
+        }
+      };
+      
+      const params = new URLSearchParams({
+        action: 'saveRoster',
+        course,
+        startDate,
+        endDate,
+        memo,
+        names: names.join(','),
+        callback: cb,
+        _t: Date.now()
+      });
+      
+      console.log('요청 전송:', APPS_SCRIPT_URL + '?' + params.toString());
+      
+      const script = document.createElement('script');
+      script.id = 'save-jsonp-script';
+      script.src = APPS_SCRIPT_URL + '?' + params.toString();
+      script.onerror = function(error) {
+        console.error('스크립트 로딩 오류:', error);
+        showStatus('서버 연결 오류', 'error');
+        cleanup();
+      };
+      document.head.appendChild(script);
+    });
+
+    document.getElementById('generateReportBtn').addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      const course = document.getElementById('reportCourse').value.trim();
+      const startDate = document.getElementById('reportStartDate').value;
+      const endDate = document.getElementById('reportEndDate').value;
+      
+      if (!course || !startDate || !endDate) {
+        showReportStatus('교육명과 교육일정을 모두 입력해주세요.', 'error');
+        return;
+      }
+      
+      if (new Date(startDate) > new Date(endDate)) {
+        showReportStatus('교육 시작일이 종료일보다 늦을 수 없습니다.', 'error');
+        return;
+      }
+
+      setReportLoading(true);
+      showReportStatus('서명 현황 보고서를 생성하는 중...', 'info');
+      
+      const cb = 'generateReportCallback_' + Date.now();
+      const timeout = setTimeout(() => {
+        showReportStatus('서버 응답 시간이 초과되었습니다.', 'error');
+        cleanup();
+      }, 60000);
+      
+      function cleanup() {
+        clearTimeout(timeout);
+        delete window[cb];
+        const script = document.getElementById('report-jsonp-script');
+        if (script && script.parentNode) {
+          document.head.removeChild(script);
+        }
+        setReportLoading(false);
+      }
+      
+      window[cb] = function(result) {
+        try {
+          if (result && result.ok) {
+            showReportStatus('보고서가 생성되었습니다!', 'success');
+            if (result.reportUrl) {
+              setTimeout(() => {
+                window.open(result.reportUrl, '_blank');
+              }, 1000);
+            }
+          } else {
+            throw new Error(result?.error || '보고서 생성 실패');
+          }
+        } catch (err) {
+          showReportStatus('보고서 생성 실패: ' + err.message, 'error');
+        } finally {
+          cleanup();
+        }
+      };
+      
+      const params = new URLSearchParams({
+        action: 'generateReport',
+        course,
+        startDate,
+        endDate,
+        callback: cb,
+        _t: Date.now()
+      });
+      
+      const script = document.createElement('script');
+      script.id = 'report-jsonp-script';
+      script.src = APPS_SCRIPT_URL + '?' + params.toString();
+      script.onerror = function() {
+        showReportStatus('서버 연결 오류', 'error');
+        cleanup();
+      };
+      document.head.appendChild(script);
+    });
+
+    function fillReportFields() {
+      const course = document.getElementById('course').value;
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+      
+      if (course) document.getElementById('reportCourse').value = course;
+      if (startDate) document.getElementById('reportStartDate').value = startDate;
+      if (endDate) document.getElementById('reportEndDate').value = endDate;
+    }
+
+    document.getElementById('clearBtn').addEventListener('click', function() {
+      document.getElementById('course').value = '';
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('startDate').value = today;
+      document.getElementById('endDate').value = today;
+      document.getElementById('memo').value = '';
+      document.getElementById('names').value = '';
+      document.getElementById('status').style.display = 'none';
+    });
+
+    function copyMainUrl() {
+      const url = document.getElementById('mainUrl').textContent;
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(url).then(() => {
+          showStatus('메인 주소가 복사되었습니다.', 'success');
+        }).catch(() => {
+          fallbackCopy(url);
+        });
+      } else {
+        fallbackCopy(url);
+      }
+    }
+
+    function fallbackCopy(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      try {
+        document.execCommand('copy') ? 
+          showStatus('메인 주소가 복사되었습니다.', 'success') : 
+          showStatus('복사 실패. 수동 복사해주세요.', 'error');
+      } catch (e) {
+        showStatus('복사 실패. 수동 복사해주세요.', 'error');
+      }
+      document.body.removeChild(ta);
+    }
+  </script>
+</body>
+</html>
