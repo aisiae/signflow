@@ -7,7 +7,7 @@
   <style>
     :root{--bg:#0b0d12;--card:#121620;--muted:#94a3b8;--border:#233046;--ink:#e5e7eb;--primary:#1d4ed8;--success:#10b981;--warning:#f59e0b;--error:#ef4444}
     *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,'Noto Sans KR',sans-serif;padding:20px}
-    .container{max-width:800px;margin:0 auto}.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px;margin-bottom:24px;box-shadow:0 10px 25px rgba(0,0,0,.2)}
+    .container{max-width:900px;margin:0 auto}.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px;margin-bottom:24px;box-shadow:0 10px 25px rgba(0,0,0,.2)}
     h1{margin:0 0 8px;color:var(--ink)}.subtitle{color:var(--muted);margin-bottom:32px}
     .form-group{margin-bottom:20px}.form-row{display:grid;gap:16px;grid-template-columns:1fr 1fr}@media(max-width:768px){.form-row{grid-template-columns:1fr}}
     label{display:block;font-weight:600;margin-bottom:8px;color:var(--ink)}
@@ -32,12 +32,15 @@
     .feature-title{font-weight:600;color:var(--success);margin-bottom:8px}
     .loading-spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-radius:50%;border-top-color:var(--primary);animation:spin 1s ease-in-out infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
-    .pdf-section{background:#1a1f2e;border:2px solid #8b5cf6;border-radius:12px;padding:24px;margin-top:24px;text-align:center}
-    .pdf-title{color:#8b5cf6;font-size:20px;font-weight:600;margin-bottom:12px}
-    .pdf-desc{color:var(--muted);margin-bottom:20px;line-height:1.6}
-    .pdf-result{margin-top:16px;padding:16px;background:#0f1320;border-radius:8px;display:none}
-    .pdf-link{color:#8b5cf6;text-decoration:none;font-weight:600;font-size:18px}
-    .pdf-link:hover{color:#a855f7}
+    .roster-list{background:#1a1f2e;border:2px solid #8b5cf6;border-radius:12px;padding:24px;margin-top:24px}
+    .roster-title{color:#8b5cf6;font-size:20px;font-weight:600;margin-bottom:16px;text-align:center}
+    .roster-item{background:#0f1320;border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+    .roster-info{flex:1;min-width:200px}
+    .roster-main{font-weight:600;color:var(--ink);margin-bottom:4px}
+    .roster-details{color:var(--muted);font-size:14px}
+    .roster-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .roster-actions .btn{margin:0;padding:8px 16px;font-size:14px}
+    .no-rosters{text-align:center;color:var(--muted);padding:20px}
   </style>
 </head>
 <body>
@@ -87,54 +90,48 @@
         <button class="copy-btn" onclick="copyMainUrl()">메인 주소 복사</button>
         <div class="help-text" style="margin-top:12px;">명단 등록 후 위 주소를 참여자들에게 공유하세요</div>
       </div>
+    </div>
 
-      <!-- PDF 생성 섹션 -->
-      <div class="pdf-section">
-        <div class="pdf-title">📄 서명 모음집 PDF 생성</div>
-        <div class="pdf-desc">
-          교육이 완료되고 참여자들이 서명을 완료한 후,<br>
-          모든 서명을 하나의 PDF 문서로 통합해서 다운로드할 수 있습니다.
-        </div>
-        <button type="button" class="btn pdf" id="pdfBtn">
-          <span id="pdfText">📋 서명 모음집 PDF 생성</span>
-          <span id="pdfSpinner" class="loading-spinner" style="display:none;"></span>
-        </button>
-        <div class="help-text" style="margin-top:12px;">현재 등록된 교육의 서명 데이터를 기준으로 PDF를 생성합니다</div>
-        
-        <div id="pdfResult" class="pdf-result">
-          <div style="margin-bottom:12px;">✅ PDF 생성이 완료되었습니다!</div>
-          <a id="pdfDownloadLink" href="#" target="_blank" class="pdf-link">📄 PDF 다운로드</a>
-          <div id="pdfStats" class="help-text" style="margin-top:8px;"></div>
+    <!-- 등록된 교육 목록 및 PDF 생성 -->
+    <div class="roster-list">
+      <div class="roster-title">📚 등록된 교육 목록</div>
+      <div id="rosterListContent">
+        <div class="loading" style="text-align:center;color:var(--muted);padding:20px;">
+          목록을 불러오는 중...
+          <div class="loading-spinner" style="margin-left:8px;"></div>
         </div>
       </div>
+      <div style="text-align:center;margin-top:16px;">
+        <button type="button" class="btn" id="refreshBtn">새로고침</button>
+      </div>
+    </div>
 
-      <div class="feature-box">
-        <div class="feature-title">📋 사용 방법</div>
-        <div class="help-text">
-          1) 교육 정보와 참여자 명단 입력 → "명단 등록하기"<br>
-          2) 메인 주소 공유 → 참여자가 본인 이름 클릭 후 서명<br>
-          3) 서명 완료 후 → "서명 모음집 PDF 생성" 클릭<br>
-          4) 생성된 PDF 파일 다운로드 → 보관 및 관리
-        </div>
+    <div class="feature-box">
+      <div class="feature-title">📋 사용 방법</div>
+      <div class="help-text">
+        1) 교육 정보와 참여자 명단 입력 → "명단 등록하기"<br>
+        2) 메인 주소 공유 → 참여자가 본인 이름 클릭 후 서명<br>
+        3) 서명 완료 후 → 해당 교육의 "PDF 생성" 버튼 클릭<br>
+        4) 생성된 PDF 파일 다운로드 → 보관 및 관리
       </div>
     </div>
   </div>
 
   <script>
     // 👇 새로 배포한 Apps Script WebApp URL
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwmGf8uazm4IfaVKFn8qV8YYltsxwZwuCqaG_lWYJeq6PlUxvElDP7SBt-XszOrJEVbyA/exec';
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby5aTrdZ1tUmSZSFkoSeQyDYhEXzngopgIDyPv_4h-dyxQoqqH6uyeUFTBJq7AXxR0G-w/exec';
 
     document.addEventListener('DOMContentLoaded', ()=>{
       const today=new Date().toISOString().split('T')[0];
       if(!document.getElementById('date').value) document.getElementById('date').value=today;
       const base=window.location.origin+window.location.pathname.replace('admin.html','index.html');
       document.getElementById('mainUrl').textContent=base;
+      loadRosterList();
     });
 
     function showStatus(m,t='info'){const el=document.getElementById('status');el.textContent=m;el.className=`status ${t}`;el.style.display='block';if(t==='success'||t==='error'){setTimeout(()=>el.style.display='none',8000);}}
     function hideStatus(){document.getElementById('status').style.display='none';}
     function setLoading(b){const btn=document.getElementById('saveBtn');const text=document.getElementById('saveText');const sp=document.getElementById('saveSpinner');btn.disabled=b;text.style.display=b?'none':'inline';sp.style.display=b?'inline-block':'none';}
-    function setPdfLoading(b){const btn=document.getElementById('pdfBtn');const text=document.getElementById('pdfText');const sp=document.getElementById('pdfSpinner');btn.disabled=b;text.style.display=b?'none':'inline';sp.style.display=b?'inline-block':'none';}
 
     function handleSubmit(e){
       e.preventDefault();
@@ -149,46 +146,109 @@
       setLoading(true); showStatus('명단을 등록하는 중...','info');
       const cb='saveRosterCallback_'+Date.now(); const to=setTimeout(()=>{showStatus('서버 응답 시간이 초과되었습니다.','error');cleanup();},30000);
       function cleanup(){clearTimeout(to);delete window[cb];const s=document.getElementById('save-jsonp-script');if(s&&s.parentNode)document.head.removeChild(s);setLoading(false);}
-      window[cb]=function(result){try{if(result&&result.ok){showStatus(`명단이 등록되었습니다! (${names.length}명)`,`success`);document.getElementById('names').value='';}else{throw new Error(result?.error||'명단 등록 실패');}}catch(err){showStatus('명단 등록 실패: '+err.message,'error');}finally{cleanup();}};
+      window[cb]=function(result){try{if(result&&result.ok){showStatus(`명단이 등록되었습니다! (${names.length}명)`,'success');document.getElementById('names').value='';loadRosterList();}else{throw new Error(result?.error||'명단 등록 실패');}}catch(err){showStatus('명단 등록 실패: '+err.message,'error');}finally{cleanup();}};
       const params=new URLSearchParams({action:'saveRoster',course,date,memo,names:names.join(','),callback:cb,_t:Date.now()});
       const s=document.createElement('script'); s.id='save-jsonp-script'; s.src=`${APPS_SCRIPT_URL}?${params.toString()}`; s.onerror=function(){showStatus('서버 연결 오류','error');cleanup();}; document.head.appendChild(s);
     }
 
-    function generatePDF(){
-      const course=document.getElementById('course').value.trim();
-      const date=document.getElementById('date').value;
-      const memo=document.getElementById('memo').value.trim();
+    function loadRosterList(){
+      const cb='loadRosterListCallback_'+Date.now();
+      const to=setTimeout(()=>{showRosterError('서버 응답 시간이 초과되었습니다.');cleanup();},30000);
+      function cleanup(){clearTimeout(to);delete window[cb];const s=document.getElementById('roster-list-script');if(s&&s.parentNode)document.head.removeChild(s);}
       
+      window[cb]=function(result){
+        try{
+          if(result&&result.ok){
+            displayRosterList(result.rosters||[]);
+          }else{
+            throw new Error(result?.error||'교육 목록을 불러올 수 없습니다.');
+          }
+        }catch(err){
+          showRosterError('목록 로드 실패: '+err.message);
+        }finally{
+          cleanup();
+        }
+      };
+      
+      const params=new URLSearchParams({action:'getAllRosters',callback:cb,_t:Date.now()});
+      const s=document.createElement('script');
+      s.id='roster-list-script';
+      s.src=`${APPS_SCRIPT_URL}?${params.toString()}`;
+      s.onerror=function(){showRosterError('서버 연결 오류');cleanup();};
+      document.head.appendChild(s);
+    }
+
+    function displayRosterList(rosters){
+      const container=document.getElementById('rosterListContent');
+      
+      if(!rosters||rosters.length===0){
+        container.innerHTML='<div class="no-rosters">등록된 교육이 없습니다.</div>';
+        return;
+      }
+      
+      container.innerHTML=rosters.map((roster,index)=>{
+        const dateStr=roster.date||'날짜없음';
+        const memoStr=roster.memo?` | ${roster.memo}`:'';
+        return `
+          <div class="roster-item">
+            <div class="roster-info">
+              <div class="roster-main">${roster.course||'교육명없음'}</div>
+              <div class="roster-details">
+                📅 ${dateStr}${memoStr} | 👥 ${roster.count||0}명 
+                | 📝 ${new Date(roster.regTime).toLocaleDateString('ko-KR')} 등록
+              </div>
+            </div>
+            <div class="roster-actions">
+              <button class="btn pdf" onclick="generatePDFForRoster('${roster.course}','${dateStr}','${roster.memo||''}')">
+                📄 PDF 생성
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function showRosterError(msg){
+      document.getElementById('rosterListContent').innerHTML=`<div class="no-rosters" style="color:var(--error);">${msg}</div>`;
+    }
+
+    function generatePDFForRoster(course,date,memo){
       if(!course||!date){
-        showStatus('교육명과 교육일정을 먼저 입력해주세요.','error');
+        showStatus('교육 정보가 올바르지 않습니다.','error');
         return;
       }
 
-      setPdfLoading(true);
-      showStatus('서명 모음집 PDF를 생성하는 중... (최대 1분 소요)','info');
-      document.getElementById('pdfResult').style.display='none';
+      // PDF 생성 버튼 비활성화
+      const buttons=document.querySelectorAll('.btn.pdf');
+      buttons.forEach(btn=>{btn.disabled=true;btn.textContent='생성 중...';});
+
+      showStatus(`"${course}" 교육의 서명 모음집 PDF를 생성하는 중... (최대 1분 소요)`,'info');
 
       const cb='generatePDFCallback_'+Date.now();
       const to=setTimeout(()=>{
         showStatus('PDF 생성 시간이 초과되었습니다. 다시 시도해주세요.','error');
         cleanup();
-      },90000); // PDF 생성은 시간이 더 걸릴 수 있음
+      },90000);
 
       function cleanup(){
         clearTimeout(to);
         delete window[cb];
         const s=document.getElementById('pdf-jsonp-script');
         if(s&&s.parentNode)document.head.removeChild(s);
-        setPdfLoading(false);
+        // 버튼 복원
+        buttons.forEach(btn=>{btn.disabled=false;btn.textContent='📄 PDF 생성';});
       }
 
       window[cb]=function(result){
         try{
           if(result&&result.ok){
             showStatus(`PDF 생성 완료! (${result.participantCount}명의 서명 포함)`,'success');
-            document.getElementById('pdfDownloadLink').href=result.pdfUrl;
-            document.getElementById('pdfStats').textContent=`파일명: ${result.fileName} | 참여자: ${result.participantCount}명`;
-            document.getElementById('pdfResult').style.display='block';
+            // PDF 다운로드 링크 표시
+            setTimeout(()=>{
+              if(confirm('PDF가 생성되었습니다. 지금 다운로드하시겠습니까?')){
+                window.open(result.pdfUrl,'_blank');
+              }
+            },1000);
           }else{
             throw new Error(result?.error||'PDF 생성 실패');
           }
@@ -203,7 +263,7 @@
         action:'generatePDF',
         course,
         date,
-        memo,
+        memo:memo||'',
         callback:cb,
         _t:Date.now()
       });
@@ -215,13 +275,41 @@
       document.head.appendChild(s);
     }
 
-    function clearForm(){document.getElementById('course').value='';document.getElementById('date').value=new Date().toISOString().split('T')[0];document.getElementById('memo').value='';document.getElementById('names').value='';hideStatus();document.getElementById('pdfResult').style.display='none';}
-    function copyMainUrl(){const url=document.getElementById('mainUrl').textContent; if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(url).then(()=>showStatus('메인 주소가 복사되었습니다.','success')).catch(()=>fallback(url));} else {fallback(url);} }
-    function fallback(text){const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';document.body.appendChild(ta);ta.focus();ta.select();try{document.execCommand('copy')?showStatus('메인 주소가 복사되었습니다.','success'):showStatus('복사 실패. 수동 복사해주세요.','error');}catch(e){showStatus('복사 실패. 수동 복사해주세요.','error');}document.body.removeChild(ta);}
+    function clearForm(){
+      document.getElementById('course').value='';
+      document.getElementById('date').value=new Date().toISOString().split('T')[0];
+      document.getElementById('memo').value='';
+      document.getElementById('names').value='';
+      hideStatus();
+    }
+
+    function copyMainUrl(){
+      const url=document.getElementById('mainUrl').textContent;
+      if(navigator.clipboard&&window.isSecureContext){
+        navigator.clipboard.writeText(url).then(()=>showStatus('메인 주소가 복사되었습니다.','success')).catch(()=>fallback(url));
+      } else {
+        fallback(url);
+      }
+    }
+
+    function fallback(text){
+      const ta=document.createElement('textarea');
+      ta.value=text;
+      ta.style.position='fixed';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      try{
+        document.execCommand('copy')?showStatus('메인 주소가 복사되었습니다.','success'):showStatus('복사 실패. 수동 복사해주세요.','error');
+      }catch(e){
+        showStatus('복사 실패. 수동 복사해주세요.','error');
+      }
+      document.body.removeChild(ta);
+    }
 
     document.getElementById('rosterForm').addEventListener('submit',handleSubmit);
     document.getElementById('clearBtn').addEventListener('click',clearForm);
-    document.getElementById('pdfBtn').addEventListener('click',generatePDF);
+    document.getElementById('refreshBtn').addEventListener('click',loadRosterList);
   </script>
 </body>
 </html>
