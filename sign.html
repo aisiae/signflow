@@ -86,6 +86,7 @@
 
   <script>
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxqFUwh7rcpRN0VzFBeGaoLtpq1_g3nsAElA8kOj-fivyp7xZ2m6v7vl7z7xt7TDciF/exec';
+    function jsonpUrl(base, params){const qs=new URLSearchParams(params).toString();return base+(base.includes('?')?'&':'?')+qs;}
     let signaturePad=null;
 
     function getUrlParams(){const p=new URLSearchParams(location.search);return {name:p.get('name')||'',course:p.get('course')||'',date:p.get('date')||'',memo:p.get('memo')||'',phone:p.get('phone')||''};}
@@ -112,8 +113,16 @@
         const to=setTimeout(()=>{cleanup();reject(new Error('서버 응답 시간 초과'));},60000);
         function cleanup(){clearTimeout(to);delete window[cb];const s=document.getElementById('jsonp-submit');if(s&&s.parentNode)document.head.removeChild(s);}
         window[cb]=res=>{cleanup(); if(res&&res.ok){resolve(true);} else {reject(new Error(res?.error||'서버 오류'));}};
-        const q=new URLSearchParams({action:'submitSignature',name:formData.name,phone:formData.phone,course:formData.course,date:formData.date,memo:formData.memo,signature:formData.signature,callback:cb,_t:Date.now()});
-        const s=document.createElement('script');s.id='jsonp-submit';s.src=`${APPS_SCRIPT_URL}?${q.toString()}`;s.onerror=()=>{cleanup();reject(new Error('네트워크 오류'));};document.head.appendChild(s);
+        const s=document.createElement('script');
+        s.id='jsonp-submit';
+        s.src=jsonpUrl(APPS_SCRIPT_URL,{
+          action:'submitSignature',
+          name:formData.name, phone:formData.phone,
+          course:formData.course, date:formData.date, memo:formData.memo,
+          signature:formData.signature, callback:cb, _t:Date.now()
+        });
+        s.onerror=()=>{cleanup();reject(new Error('네트워크 오류'));};
+        document.head.appendChild(s);
       });
     }
 
