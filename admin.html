@@ -17,7 +17,6 @@
     .btn{border:1px solid var(--border);background:#101826;color:var(--ink);padding:12px 24px;border-radius:10px;cursor:pointer;font-size:16px;font-weight:500;transition:.3s;text-decoration:none;display:inline-flex;align-items:center;gap:8px;margin-right:12px;margin-bottom:8px}
     .btn:hover{background:#1a2332;border-color:var(--primary)}.btn.primary{border-color:#2563eb;background:var(--primary)}.btn.primary:hover{background:#1e40af}
     .btn.success{border-color:var(--success);background:var(--success);color:#000}.btn.warning{border-color:var(--warning);background:var(--warning);color:#000}
-    .btn.pdf{border-color:#8b5cf6;background:#8b5cf6;color:#fff}.btn.pdf:hover{background:#7c3aed}
     .btn:disabled{opacity:.6;cursor:not-allowed}
     .status{padding:12px 16px;border-radius:8px;margin:16px 0;font-weight:500;display:none}
     .status.success{background:rgba(16,185,129,.2);color:var(--success);border:1px solid var(--success)}
@@ -101,7 +100,7 @@
       </div>
     </div>
 
-    <!-- 등록된 교육 목록 및 PDF 생성 -->
+    <!-- 등록된 교육 목록 및 스프레드시트 생성 -->
     <div class="roster-list">
       <div class="roster-title">📚 등록된 교육 목록</div>
       <div id="rosterListContent">
@@ -120,324 +119,401 @@
       <div class="help-text">
         1) 교육 정보와 참여자 명단 입력 → "명단 등록하기"<br>
         2) 메인 주소 공유 → 참여자가 교육 기간 중 언제든 서명 가능<br>
-        3) 서명 완료 후 → 해당 교육의 "PDF 생성" 버튼 클릭<br>
-        4) 생성된 PDF 파일 다운로드 → 보관 및 관리<br>
+        3) 서명 완료 후 → 해당 교육의 "스프레드시트 생성" 버튼 클릭<br>
+        4) 생성된 스프레드시트에서 서명 이미지 링크 확인<br>
         5) 완료된 교육은 "삭제" 버튼으로 정리
       </div>
     </div>
   </div>
 
   <script>
-    // 👇 새로 배포한 Apps Script WebApp URL
+    // Apps Script WebApp URL
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby5aTrdZ1tUmSZSFkoSeQyDYhEXzngopgIDyPv_4h-dyxQoqqH6uyeUFTBJq7AXxR0G-w/exec';
 
-    document.addEventListener('DOMContentLoaded', ()=>{
-      const today=new Date().toISOString().split('T')[0];
-      document.getElementById('startDate').value=today;
+    document.addEventListener('DOMContentLoaded', function(){
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('startDate').value = today;
       
-      // 끝일은 시작일 + 7일로 기본 설정
-      const nextWeek=new Date();
-      nextWeek.setDate(nextWeek.getDate()+7);
-      document.getElementById('endDate').value=nextWeek.toISOString().split('T')[0];
+      const nextWeek = new Date();
+      nextWeek.setDate(nextWeek.getDate() + 7);
+      document.getElementById('endDate').value = nextWeek.toISOString().split('T')[0];
       
-      const base=window.location.origin+window.location.pathname.replace('admin.html','index.html');
-      document.getElementById('mainUrl').textContent=base;
+      const base = window.location.origin + window.location.pathname.replace('admin.html','index.html');
+      document.getElementById('mainUrl').textContent = base;
       loadRosterList();
       
-      // 시작일 변경 시 끝일도 자동 조정
-      document.getElementById('startDate').addEventListener('change',function(){
-        const startDate=new Date(this.value);
-        const endDate=new Date(document.getElementById('endDate').value);
-        if(endDate<=startDate){
-          startDate.setDate(startDate.getDate()+1);
-          document.getElementById('endDate').value=startDate.toISOString().split('T')[0];
+      document.getElementById('startDate').addEventListener('change', function(){
+        const startDate = new Date(this.value);
+        const endDate = new Date(document.getElementById('endDate').value);
+        if(endDate <= startDate){
+          startDate.setDate(startDate.getDate() + 1);
+          document.getElementById('endDate').value = startDate.toISOString().split('T')[0];
         }
       });
     });
 
-    function showStatus(m,t='info'){const el=document.getElementById('status');el.textContent=m;el.className=`status ${t}`;el.style.display='block';if(t==='success'||t==='error'){setTimeout(()=>el.style.display='none',8000);}}
-    function hideStatus(){document.getElementById('status').style.display='none';}
-    function setLoading(b){const btn=document.getElementById('saveBtn');const text=document.getElementById('saveText');const sp=document.getElementById('saveSpinner');btn.disabled=b;text.style.display=b?'none':'inline';sp.style.display=b?'inline-block':'none';}
+    function showStatus(message, type){
+      const el = document.getElementById('status');
+      el.textContent = message;
+      el.className = 'status ' + (type || 'info');
+      el.style.display = 'block';
+      if(type === 'success' || type === 'error'){
+        setTimeout(function(){el.style.display = 'none';}, 8000);
+      }
+    }
+
+    function hideStatus(){
+      document.getElementById('status').style.display = 'none';
+    }
+
+    function setLoading(isLoading){
+      const btn = document.getElementById('saveBtn');
+      const text = document.getElementById('saveText');
+      const spinner = document.getElementById('saveSpinner');
+      btn.disabled = isLoading;
+      text.style.display = isLoading ? 'none' : 'inline';
+      spinner.style.display = isLoading ? 'inline-block' : 'none';
+    }
 
     function handleSubmit(e){
       e.preventDefault();
-      const course=document.getElementById('course').value.trim();
-      const startDate=document.getElementById('startDate').value;
-      const endDate=document.getElementById('endDate').value;
-      const memo=document.getElementById('memo').value.trim();
-      const namesText=document.getElementById('names').value.trim();
+      const course = document.getElementById('course').value.trim();
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+      const memo = document.getElementById('memo').value.trim();
+      const namesText = document.getElementById('names').value.trim();
       
-      if(!course||!startDate||!endDate||!namesText){
-        showStatus('교육명, 시작일, 끝일, 참여자 명단을 모두 입력해주세요.','error');
+      if(!course || !startDate || !endDate || !namesText){
+        showStatus('교육명, 시작일, 끝일, 참여자 명단을 모두 입력해주세요.', 'error');
         return;
       }
       
-      if(new Date(startDate)>=new Date(endDate)){
-        showStatus('끝일은 시작일보다 뒤여야 합니다.','error');
+      if(new Date(startDate) >= new Date(endDate)){
+        showStatus('끝일은 시작일보다 뒤여야 합니다.', 'error');
         return;
       }
       
-      const names=(namesText.includes(',')?namesText.split(','):namesText.split('\n')).map(n=>n.trim()).filter(Boolean);
-      if(!names.length){showStatus('올바른 참여자 명단을 입력해주세요.','error');return;}
+      const names = (namesText.includes(',') ? namesText.split(',') : namesText.split('\n')).map(function(n){return n.trim();}).filter(Boolean);
+      if(!names.length){
+        showStatus('올바른 참여자 명단을 입력해주세요.', 'error');
+        return;
+      }
 
-      setLoading(true); showStatus('명단을 등록하는 중...','info');
-      const cb='saveRosterCallback_'+Date.now(); 
-      const to=setTimeout(()=>{showStatus('서버 응답 시간이 초과되었습니다.','error');cleanup();},30000);
-      function cleanup(){clearTimeout(to);delete window[cb];const s=document.getElementById('save-jsonp-script');if(s&&s.parentNode)document.head.removeChild(s);setLoading(false);}
-      window[cb]=function(result){
+      setLoading(true);
+      showStatus('명단을 등록하는 중...', 'info');
+      
+      const callback = 'saveRosterCallback_' + Date.now();
+      const timeout = setTimeout(function(){
+        showStatus('서버 응답 시간이 초과되었습니다.', 'error');
+        cleanup();
+      }, 30000);
+      
+      function cleanup(){
+        clearTimeout(timeout);
+        delete window[callback];
+        const script = document.getElementById('save-jsonp-script');
+        if(script && script.parentNode) document.head.removeChild(script);
+        setLoading(false);
+      }
+      
+      window[callback] = function(result){
         try{
-          if(result&&result.ok){
-            showStatus(`명단이 등록되었습니다! (${names.length}명)`,'success');
-            document.getElementById('names').value='';
+          if(result && result.ok){
+            showStatus('명단이 등록되었습니다! (' + names.length + '명)', 'success');
+            document.getElementById('names').value = '';
             loadRosterList();
-          }else{
-            throw new Error(result?.error||'명단 등록 실패');
+          } else {
+            throw new Error(result ? result.error : '명단 등록 실패');
           }
-        }catch(err){
-          showStatus('명단 등록 실패: '+err.message,'error');
-        }finally{
+        } catch(err){
+          showStatus('명단 등록 실패: ' + err.message, 'error');
+        } finally {
           cleanup();
         }
       };
-      const params=new URLSearchParams({
-        action:'saveRoster',course,startDate,endDate,memo,names:names.join(','),callback:cb,_t:Date.now()
+      
+      const params = new URLSearchParams({
+        action: 'saveRoster',
+        course: course,
+        startDate: startDate,
+        endDate: endDate,
+        memo: memo,
+        names: names.join(','),
+        callback: callback,
+        _t: Date.now()
       });
-      const s=document.createElement('script'); 
-      s.id='save-jsonp-script'; 
-      s.src=`${APPS_SCRIPT_URL}?${params.toString()}`; 
-      s.onerror=function(){showStatus('서버 연결 오류','error');cleanup();}; 
-      document.head.appendChild(s);
+      
+      const script = document.createElement('script');
+      script.id = 'save-jsonp-script';
+      script.src = APPS_SCRIPT_URL + '?' + params.toString();
+      script.onerror = function(){
+        showStatus('서버 연결 오류', 'error');
+        cleanup();
+      };
+      document.head.appendChild(script);
     }
 
     function loadRosterList(){
-      const cb='loadRosterListCallback_'+Date.now();
-      const to=setTimeout(()=>{showRosterError('서버 응답 시간이 초과되었습니다.');cleanup();},30000);
-      function cleanup(){clearTimeout(to);delete window[cb];const s=document.getElementById('roster-list-script');if(s&&s.parentNode)document.head.removeChild(s);}
+      const callback = 'loadRosterListCallback_' + Date.now();
+      const timeout = setTimeout(function(){
+        showRosterError('서버 응답 시간이 초과되었습니다.');
+        cleanup();
+      }, 30000);
       
-      window[cb]=function(result){
+      function cleanup(){
+        clearTimeout(timeout);
+        delete window[callback];
+        const script = document.getElementById('roster-list-script');
+        if(script && script.parentNode) document.head.removeChild(script);
+      }
+      
+      window[callback] = function(result){
         try{
-          if(result&&result.ok){
-            displayRosterList(result.rosters||[]);
-          }else{
-            throw new Error(result?.error||'교육 목록을 불러올 수 없습니다.');
+          if(result && result.ok){
+            displayRosterList(result.rosters || []);
+          } else {
+            throw new Error(result ? result.error : '교육 목록을 불러올 수 없습니다.');
           }
-        }catch(err){
-          showRosterError('목록 로드 실패: '+err.message);
-        }finally{
+        } catch(err){
+          showRosterError('목록 로드 실패: ' + err.message);
+        } finally {
           cleanup();
         }
       };
       
-      const params=new URLSearchParams({action:'getAllRosters',callback:cb,_t:Date.now()});
-      const s=document.createElement('script');
-      s.id='roster-list-script';
-      s.src=`${APPS_SCRIPT_URL}?${params.toString()}`;
-      s.onerror=function(){showRosterError('서버 연결 오류');cleanup();};
-      document.head.appendChild(s);
+      const params = new URLSearchParams({
+        action: 'getAllRosters',
+        callback: callback,
+        _t: Date.now()
+      });
+      
+      const script = document.createElement('script');
+      script.id = 'roster-list-script';
+      script.src = APPS_SCRIPT_URL + '?' + params.toString();
+      script.onerror = function(){
+        showRosterError('서버 연결 오류');
+        cleanup();
+      };
+      document.head.appendChild(script);
     }
 
     function displayRosterList(rosters){
-      const container=document.getElementById('rosterListContent');
+      const container = document.getElementById('rosterListContent');
       
-      if(!rosters||rosters.length===0){
-        container.innerHTML='<div class="no-rosters">등록된 교육이 없습니다.</div>';
+      if(!rosters || rosters.length === 0){
+        container.innerHTML = '<div class="no-rosters">등록된 교육이 없습니다.</div>';
         return;
       }
       
-      container.innerHTML=rosters.map((roster,index)=>{
-        const startDate=roster.startDate||'시작일없음';
-        const endDate=roster.endDate||'끝일없음';
-        const memoStr=roster.memo?` | ${roster.memo}`:'';
+      container.innerHTML = rosters.map(function(roster, index){
+        const startDate = roster.startDate || '시작일없음';
+        const endDate = roster.endDate || '끝일없음';
+        const memoStr = roster.memo ? ' | ' + roster.memo : '';
         
-        let statusBadge='';
-        let statusText='';
-        if(roster.status==='active'){
-          statusBadge='<span class="status-badge status-active">진행중</span>';
-          statusText='진행중';
-        }else if(roster.status==='upcoming'){
-          statusBadge='<span class="status-badge status-upcoming">예정</span>';
-          statusText='예정';
-        }else{
-          statusBadge='<span class="status-badge status-completed">완료</span>';
-          statusText='완료';
+        let statusBadge = '';
+        if(roster.status === 'active'){
+          statusBadge = '<span class="status-badge status-active">진행중</span>';
+        } else if(roster.status === 'upcoming'){
+          statusBadge = '<span class="status-badge status-upcoming">예정</span>';
+        } else {
+          statusBadge = '<span class="status-badge status-completed">완료</span>';
         }
         
-        return `
-          <div class="roster-item">
-            <div class="roster-info">
-              <div class="roster-main">${roster.course||'교육명없음'}${statusBadge}</div>
-              <div class="roster-details">
-                📅 ${startDate} ~ ${endDate}${memoStr} | 👥 ${roster.count||0}명 
-                | 📝 ${new Date(roster.regTime).toLocaleDateString('ko-KR')} 등록
-              </div>
-            </div>
-            <div class="roster-actions">
-              <button class="btn success" onclick="generateSheetForRoster('${roster.course}','${startDate}','${endDate}','${roster.memo||''}')">
-                📊 스프레드시트 생성
-              </button>
-              <button class="btn warning" onclick="deleteRoster('${roster.course}','${startDate}','${endDate}','${roster.memo||''}')">
-                🗑️ 삭제
-              </button>
-            </div>
-          </div>
-        `;
+        return [
+          '<div class="roster-item">',
+            '<div class="roster-info">',
+              '<div class="roster-main">' + (roster.course || '교육명없음') + statusBadge + '</div>',
+              '<div class="roster-details">',
+                '📅 ' + startDate + ' ~ ' + endDate + memoStr + ' | 👥 ' + (roster.count || 0) + '명 ',
+                '| 📝 ' + new Date(roster.regTime).toLocaleDateString('ko-KR') + ' 등록',
+              '</div>',
+            '</div>',
+            '<div class="roster-actions">',
+              '<button class="btn success" onclick="generateSheetForRoster(\'' + roster.course + '\',\'' + startDate + '\',\'' + endDate + '\',\'' + (roster.memo || '') + '\')">',
+                '📊 스프레드시트 생성',
+              '</button>',
+              '<button class="btn warning" onclick="deleteRoster(\'' + roster.course + '\',\'' + startDate + '\',\'' + endDate + '\',\'' + (roster.memo || '') + '\')">',
+                '🗑️ 삭제',
+              '</button>',
+            '</div>',
+          '</div>'
+        ].join('');
       }).join('');
     }
 
-    function showRosterError(msg){
-      document.getElementById('rosterListContent').innerHTML=`<div class="no-rosters" style="color:var(--error);">${msg}</div>`;
+    function showRosterError(message){
+      document.getElementById('rosterListContent').innerHTML = '<div class="no-rosters" style="color:var(--error);">' + message + '</div>';
     }
 
-    function generateSheetForRoster(course,startDate,endDate,memo){
-      if(!course||!startDate||!endDate){
-        showStatus('교육 정보가 올바르지 않습니다.','error');
+    function generateSheetForRoster(course, startDate, endDate, memo){
+      if(!course || !startDate || !endDate){
+        showStatus('교육 정보가 올바르지 않습니다.', 'error');
         return;
       }
 
-      const buttons=document.querySelectorAll('.btn.success');
-      buttons.forEach(btn=>{btn.disabled=true;btn.textContent='생성 중...';});
+      const buttons = document.querySelectorAll('.btn.success');
+      buttons.forEach(function(btn){
+        btn.disabled = true;
+        btn.textContent = '생성 중...';
+      });
 
-      showStatus(`"${course}" 교육의 서명 스프레드시트를 생성하는 중...`,'info');
+      showStatus('"' + course + '" 교육의 서명 스프레드시트를 생성하는 중...', 'info');
 
-      const cb='generateSheetCallback_'+Date.now();
-      const to=setTimeout(()=>{
-        showStatus('스프레드시트 생성 시간이 초과되었습니다. 다시 시도해주세요.','error');
+      const callback = 'generateSheetCallback_' + Date.now();
+      const timeout = setTimeout(function(){
+        showStatus('스프레드시트 생성 시간이 초과되었습니다. 다시 시도해주세요.', 'error');
         cleanup();
-      },60000);
+      }, 60000);
 
       function cleanup(){
-        clearTimeout(to);
-        delete window[cb];
-        const s=document.getElementById('sheet-jsonp-script');
-        if(s&&s.parentNode)document.head.removeChild(s);
-        buttons.forEach(btn=>{btn.disabled=false;btn.textContent='📊 스프레드시트 생성';});
+        clearTimeout(timeout);
+        delete window[callback];
+        const script = document.getElementById('sheet-jsonp-script');
+        if(script && script.parentNode) document.head.removeChild(script);
+        buttons.forEach(function(btn){
+          btn.disabled = false;
+          btn.textContent = '📊 스프레드시트 생성';
+        });
       }
 
-      window[cb]=function(result){
+      window[callback] = function(result){
         try{
-          if(result&&result.ok){
-            showStatus(`스프레드시트 생성 완료! (${result.participantCount}명의 서명 포함)`,'success');
-            setTimeout(()=>{
+          if(result && result.ok){
+            showStatus('스프레드시트 생성 완료! (' + result.participantCount + '명의 서명 포함)', 'success');
+            setTimeout(function(){
               if(confirm('스프레드시트가 생성되었습니다. 지금 열어보시겠습니까?')){
-                window.open(result.sheetUrl,'_blank');
+                window.open(result.sheetUrl, '_blank');
               }
-            },1000);
-          }else{
-            throw new Error(result?.error||'스프레드시트 생성 실패');
+            }, 1000);
+          } else {
+            throw new Error(result ? result.error : '스프레드시트 생성 실패');
           }
-        }catch(err){
-          showStatus('스프레드시트 생성 실패: '+err.message,'error');
-        }finally{
+        } catch(err){
+          showStatus('스프레드시트 생성 실패: ' + err.message, 'error');
+        } finally {
           cleanup();
         }
       };
 
-      const params=new URLSearchParams({
-        action:'generateSignatureSheet',course,startDate,endDate,memo:memo||'',callback:cb,_t:Date.now()
+      const params = new URLSearchParams({
+        action: 'generateSignatureSheet',
+        course: course,
+        startDate: startDate,
+        endDate: endDate,
+        memo: memo || '',
+        callback: callback,
+        _t: Date.now()
       });
 
-      const s=document.createElement('script');
-      s.id='sheet-jsonp-script';
-      s.src=`${APPS_SCRIPT_URL}?${params.toString()}`;
-      s.onerror=function(){showStatus('서버 연결 오류','error');cleanup();};
-      document.head.appendChild(s);
+      const script = document.createElement('script');
+      script.id = 'sheet-jsonp-script';
+      script.src = APPS_SCRIPT_URL + '?' + params.toString();
+      script.onerror = function(){
+        showStatus('서버 연결 오류', 'error');
+        cleanup();
+      };
+      document.head.appendChild(script);
     }
 
-    function deleteRoster(course,startDate,endDate,memo){
-      });
-
-      const s=document.createElement('script');
-      s.id='sheet-jsonp-script';
-      s.src=`${APPS_SCRIPT_URL}?${params.toString()}`;
-      s.onerror=function(){showStatus('서버 연결 오류','error');cleanup();};
-      document.head.appendChild(s);
-    }
-
-    function deleteRoster(course,startDate,endDate,memo){
-      if(!confirm(`"${course}" 교육을 삭제하시겠습니까?\n\n⚠️ 주의: 이 작업은 되돌릴 수 없습니다.`)){
+    function deleteRoster(course, startDate, endDate, memo){
+      if(!confirm('"' + course + '" 교육을 삭제하시겠습니까?\n\n⚠️ 주의: 이 작업은 되돌릴 수 없습니다.')){
         return;
       }
 
-      showStatus('교육 명단을 삭제하는 중...','info');
+      showStatus('교육 명단을 삭제하는 중...', 'info');
 
-      const cb='deleteRosterCallback_'+Date.now();
-      const to=setTimeout(()=>{
-        showStatus('삭제 요청 시간이 초과되었습니다.','error');
+      const callback = 'deleteRosterCallback_' + Date.now();
+      const timeout = setTimeout(function(){
+        showStatus('삭제 요청 시간이 초과되었습니다.', 'error');
         cleanup();
-      },30000);
+      }, 30000);
 
       function cleanup(){
-        clearTimeout(to);
-        delete window[cb];
-        const s=document.getElementById('delete-jsonp-script');
-        if(s&&s.parentNode)document.head.removeChild(s);
+        clearTimeout(timeout);
+        delete window[callback];
+        const script = document.getElementById('delete-jsonp-script');
+        if(script && script.parentNode) document.head.removeChild(script);
       }
 
-      window[cb]=function(result){
+      window[callback] = function(result){
         try{
-          if(result&&result.ok){
-            showStatus(`교육이 삭제되었습니다.`,'success');
+          if(result && result.ok){
+            showStatus('교육이 삭제되었습니다.', 'success');
             loadRosterList();
-          }else{
-            throw new Error(result?.error||'삭제 실패');
+          } else {
+            throw new Error(result ? result.error : '삭제 실패');
           }
-        }catch(err){
-          showStatus('삭제 실패: '+err.message,'error');
-        }finally{
+        } catch(err){
+          showStatus('삭제 실패: ' + err.message, 'error');
+        } finally {
           cleanup();
         }
       };
 
-      const params=new URLSearchParams({
-        action:'deleteRoster',course,startDate,endDate,memo:memo||'',callback:cb,_t:Date.now()
+      const params = new URLSearchParams({
+        action: 'deleteRoster',
+        course: course,
+        startDate: startDate,
+        endDate: endDate,
+        memo: memo || '',
+        callback: callback,
+        _t: Date.now()
       });
 
-      const s=document.createElement('script');
-      s.id='delete-jsonp-script';
-      s.src=`${APPS_SCRIPT_URL}?${params.toString()}`;
-      s.onerror=function(){showStatus('서버 연결 오류','error');cleanup();};
-      document.head.appendChild(s);
+      const script = document.createElement('script');
+      script.id = 'delete-jsonp-script';
+      script.src = APPS_SCRIPT_URL + '?' + params.toString();
+      script.onerror = function(){
+        showStatus('서버 연결 오류', 'error');
+        cleanup();
+      };
+      document.head.appendChild(script);
     }
 
     function clearForm(){
-      document.getElementById('course').value='';
-      const today=new Date().toISOString().split('T')[0];
-      document.getElementById('startDate').value=today;
-      const nextWeek=new Date();
-      nextWeek.setDate(nextWeek.getDate()+7);
-      document.getElementById('endDate').value=nextWeek.toISOString().split('T')[0];
-      document.getElementById('memo').value='';
-      document.getElementById('names').value='';
+      document.getElementById('course').value = '';
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('startDate').value = today;
+      const nextWeek = new Date();
+      nextWeek.setDate(nextWeek.getDate() + 7);
+      document.getElementById('endDate').value = nextWeek.toISOString().split('T')[0];
+      document.getElementById('memo').value = '';
+      document.getElementById('names').value = '';
       hideStatus();
     }
 
     function copyMainUrl(){
-      const url=document.getElementById('mainUrl').textContent;
-      if(navigator.clipboard&&window.isSecureContext){
-        navigator.clipboard.writeText(url).then(()=>showStatus('메인 주소가 복사되었습니다.','success')).catch(()=>fallback(url));
+      const url = document.getElementById('mainUrl').textContent;
+      if(navigator.clipboard && window.isSecureContext){
+        navigator.clipboard.writeText(url).then(function(){
+          showStatus('메인 주소가 복사되었습니다.', 'success');
+        }).catch(function(){
+          fallbackCopy(url);
+        });
       } else {
-        fallback(url);
+        fallbackCopy(url);
       }
     }
 
-    function fallback(text){
-      const ta=document.createElement('textarea');
-      ta.value=text;
-      ta.style.position='fixed';
-      document.body.appendChild(ta);
-      ta.focus();
-      ta.select();
+    function fallbackCopy(text){
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
       try{
-        document.execCommand('copy')?showStatus('메인 주소가 복사되었습니다.','success'):showStatus('복사 실패. 수동 복사해주세요.','error');
-      }catch(e){
-        showStatus('복사 실패. 수동 복사해주세요.','error');
+        const success = document.execCommand('copy');
+        showStatus(success ? '메인 주소가 복사되었습니다.' : '복사 실패. 수동 복사해주세요.', success ? 'success' : 'error');
+      } catch(e){
+        showStatus('복사 실패. 수동 복사해주세요.', 'error');
       }
-      document.body.removeChild(ta);
+      document.body.removeChild(textarea);
     }
 
-    document.getElementById('rosterForm').addEventListener('submit',handleSubmit);
-    document.getElementById('clearBtn').addEventListener('click',clearForm);
-    document.getElementById('refreshBtn').addEventListener('click',loadRosterList);
+    document.getElementById('rosterForm').addEventListener('submit', handleSubmit);
+    document.getElementById('clearBtn').addEventListener('click', clearForm);
+    document.getElementById('refreshBtn').addEventListener('click', loadRosterList);
   </script>
 </body>
 </html>
