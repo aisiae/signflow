@@ -1,564 +1,171 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <title>교육 이수 확인 · 자필 서명</title>
-    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.2.0/dist/signature_pad.umd.min.js"></script>
-    <style>
-        :root {
-            --bg: #0b0d12;
-            --card: #121620;
-            --muted: #94a3b8;
-            --border: #233046;
-            --ink: #e5e7eb;
-            --primary: #1d4ed8;
-            --success: #10b981;
-            --error: #ef4444;
-        }
-        
-        * { box-sizing: border-box; }
-        
-        body {
-            margin: 0;
-            background: var(--bg);
-            color: var(--ink);
-            font: 16px/1.6 system-ui, -apple-system, 'Noto Sans KR', sans-serif;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        
-        .container { max-width: 600px; width: 100%; }
-        
-        .card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 32px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-        }
-        
-        h1 { margin: 0 0 8px; color: var(--ink); text-align: center; }
-        .subtitle { color: var(--muted); text-align: center; margin-bottom: 32px; }
-        .form-group { margin-bottom: 20px; }
-        .form-row { display: grid; gap: 16px; grid-template-columns: 1fr 1fr; }
-        @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
-        label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--ink); }
-        
-        input[type="text"], input[type="tel"], input[type="date"] {
-            width: 100%;
-            padding: 12px 16px;
-            border-radius: 10px;
-            border: 1px solid var(--border);
-            background: #0f1320;
-            color: var(--ink);
-            font-size: 16px;
-            transition: border-color 0.3s ease;
-        }
-        
-        input:focus { outline: none; border-color: var(--primary); }
-        input:read-only { background: #0a0f19; color: var(--muted); }
-        
-        .signature-pad {
-            border: 2px solid var(--border);
-            border-radius: 12px;
-            width: 100%;
-            height: 200px;
-            background: #0a0f19;
-            cursor: crosshair;
-            touch-action: none;
-            transition: border-color 0.3s ease;
-        }
-        
-        .signature-pad:hover { border-color: var(--primary); }
-        .signature-controls { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
-        
-        .btn {
-            appearance: none;
-            border: 1px solid var(--border);
-            background: #101826;
-            color: var(--ink);
-            padding: 12px 24px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .btn:hover { background: #1a2332; border-color: var(--primary); }
-        .btn.primary { border-color: #2563eb; background: var(--primary); }
-        .btn.primary:hover { background: #1e40af; }
-        .btn:disabled { 
-            opacity: 0.6; 
-            cursor: not-allowed;
-            transform: none !important;
-        }
-        
-        .checkbox-group { margin: 24px 0; }
-        .checkbox-wrapper { display: flex; align-items: flex-start; gap: 12px; }
-        input[type="checkbox"] { margin-top: 4px; transform: scale(1.2); }
-        
-        .status {
-            margin-top: 16px;
-            padding: 12px 16px;
-            border-radius: 8px;
-            text-align: center;
-            font-weight: 500;
-            display: none;
-        }
-        
-        .status.success { background: rgba(16, 185, 129, 0.2); color: var(--success); border: 1px solid var(--success); }
-        .status.error { background: rgba(239, 68, 68, 0.2); color: var(--error); border: 1px solid var(--error); }
-        .status.info { background: rgba(29, 78, 216, 0.2); color: var(--primary); border: 1px solid var(--primary); }
-        
-        .help-text { font-size: 14px; color: var(--muted); margin-top: 4px; }
-        
-        .back-link {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            color: var(--muted);
-            text-decoration: none;
-            font-size: 14px;
-            padding: 8px 12px;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            background: var(--card);
-            transition: all 0.3s ease;
-        }
-        
-        .back-link:hover { color: var(--ink); border-color: var(--primary); }
-        
-        .user-info {
-            background: #0f1320;
-            padding: 16px;
-            border-radius: 10px;
-            margin-bottom: 24px;
-            border-left: 4px solid var(--primary);
-        }
-        
-        .user-name {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--primary);
-            margin-bottom: 4px;
-        }
-        
-        .course-name {
-            color: var(--muted);
-            font-size: 14px;
-        }
-    </style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>교육 이수 확인 · 자필 서명</title>
+  <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.2.0/dist/signature_pad.umd.min.js"></script>
+  <style>
+    :root{--bg:#0b0d12;--card:#121620;--muted:#94a3b8;--border:#233046;--ink:#e5e7eb;--primary:#1d4ed8;--success:#10b981;--error:#ef4444}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,'Noto Sans KR',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+    .container{max-width:600px;width:100%}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px;box-shadow:0 10px 25px rgba(0,0,0,.3)}
+    h1{margin:0 0 8px;color:var(--ink);text-align:center}.subtitle{color:var(--muted);text-align:center;margin-bottom:32px}
+    .form-group{margin-bottom:20px}.form-row{display:grid;gap:16px;grid-template-columns:1fr 1fr}@media(max-width:600px){.form-row{grid-template-columns:1fr}}
+    label{display:block;font-weight:600;margin-bottom:8px;color:var(--ink)}
+    input[type="text"],input[type="tel"],input[type="date"]{width:100%;padding:12px 16px;border-radius:10px;border:1px solid var(--border);background:#0f1320;color:var(--ink);font-size:16px;transition:border-color .3s}
+    input:focus{outline:none;border-color:var(--primary)}input:read-only{background:#0a0f19;color:var(--muted)}
+    .signature-pad{border:2px solid var(--border);border-radius:12px;width:100%;height:200px;background:#0a0f19;cursor:crosshair;touch-action:none;transition:border-color .3s}
+    .signature-pad:hover{border-color:var(--primary)}.signature-controls{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+    .btn{border:1px solid var(--border);background:#101826;color:var(--ink);padding:12px 24px;border-radius:10px;cursor:pointer;font-size:16px;font-weight:500;transition:.3s;text-decoration:none;display:inline-flex;align-items:center;gap:8px}
+    .btn:hover{background:#1a2332;border-color:var(--primary)}.btn.primary{border-color:#2563eb;background:var(--primary)}.btn.primary:hover{background:#1e40af}
+    .btn:disabled{opacity:.6;cursor:not-allowed}
+    .checkbox-group{margin:24px 0}.checkbox-wrapper{display:flex;align-items:flex-start;gap:12px}input[type="checkbox"]{margin-top:4px;transform:scale(1.2)}
+    .status{margin-top:16px;padding:12px 16px;border-radius:8px;text-align:center;font-weight:500;display:none}
+    .status.success{background:rgba(16,185,129,.2);color:var(--success);border:1px solid var(--success)}
+    .status.error{background:rgba(239,68,68,.2);color:var(--error);border:1px solid var(--error)}
+    .status.info{background:rgba(29,78,216,.2);color:var(--primary);border:1px solid var(--primary)}
+    .back-link{position:fixed;top:20px;left:20px;color:var(--muted);text-decoration:none;font-size:14px;padding:8px 12px;border:1px solid var(--border);border-radius:6px;background:var(--card);transition:.3s}
+    .back-link:hover{color:var(--ink);border-color:var(--primary)}
+    .user-info{background:#0f1320;padding:16px;border-radius:10px;margin-bottom:24px;border-left:4px solid var(--primary)}
+    .user-name{font-size:18px;font-weight:600;color:var(--primary);margin-bottom:4px}.course-name{color:var(--muted);font-size:14px}
+  </style>
 </head>
 <body>
-    <a href="index.html" class="back-link">← 명단으로</a>
-    
-    <div class="container">
-        <div class="card">
-            <h1>교육 이수 확인 · 자필 서명</h1>
-            <p class="subtitle">정보를 확인하고 서명해주세요</p>
-            
-            <div id="userInfo" class="user-info" style="display: none;">
-                <div class="user-name" id="displayName"></div>
-                <div class="course-name" id="displayCourse"></div>
-            </div>
-            
-            <form id="signatureForm">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="name">이름 *</label>
-                        <input type="text" id="name" name="name" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label for="phone">휴대폰 번호 *</label>
-                        <input type="tel" id="phone" name="phone" placeholder="010-1234-5678" required>
-                        <div class="help-text">숫자만 입력하거나 010-1234-5678 형식</div>
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="course">교육명 *</label>
-                        <input type="text" id="course" name="course" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label for="date">이수일자 *</label>
-                        <input type="date" id="date" name="date" required>
-                        <div class="help-text">실제 이수한 날짜를 선택해주세요</div>
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label>자필 서명 *</label>
-                    <canvas id="signaturePad" class="signature-pad"></canvas>
-                    <div class="signature-controls">
-                        <button type="button" id="clearBtn" class="btn">지우기</button>
-                        <span class="help-text">마우스나 터치로 서명해주세요</span>
-                    </div>
-                </div>
-                
-                <div class="checkbox-group">
-                    <div class="checkbox-wrapper">
-                        <input type="checkbox" id="agree" required>
-                        <label for="agree">입력한 정보 및 서명 이미지를 교육 이수 확인 목적으로 수집·보관하는 것에 동의합니다.</label>
-                    </div>
-                </div>
-                
-                <button type="submit" class="btn primary" id="submitBtn">제출하기</button>
-                <div id="status" class="status"></div>
-            </form>
-        </div>
-    </div>
+  <a href="index.html" class="back-link">← 명단으로</a>
 
-    <script>
-        // Apps Script URL - 실제 배포된 URL 사용
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzIkdXf6ngIdp3YLUbu1geoXgvF6975jvbDJsGhYGw5w-fTC6PQviYTQm8AQ16c0CRqHw/exec';
-        
-        let signaturePad = null;
-        
-        // URL 파라미터 읽기
-        function getUrlParams() {
-            const params = new URLSearchParams(window.location.search);
-            return {
-                name: params.get('name') || '',
-                course: params.get('course') || '',
-                date: params.get('date') || '',
-                memo: params.get('memo') || '',
-                phone: params.get('phone') || ''
-            };
-        }
-        
-        // 폼에 URL 파라미터 값 채우기
-        function fillFormFromParams() {
-            const params = getUrlParams();
-            console.log('URL 파라미터:', params);
-            
-            if (params.name) {
-                document.getElementById('name').value = params.name;
-                document.getElementById('displayName').textContent = params.name + ' 님';
-                document.getElementById('userInfo').style.display = 'block';
-            }
-            
-            if (params.course) {
-                document.getElementById('course').value = params.course;
-                document.getElementById('displayCourse').textContent = params.course;
-            }
-            
-            if (params.phone) {
-                document.getElementById('phone').value = params.phone;
-            }
-            
-            // 이수일자는 기본값 설정
-            if (params.date) {
-                document.getElementById('date').value = params.date;
-            } else {
-                document.getElementById('date').value = new Date().toISOString().split('T')[0];
-            }
-        }
-        
-        // 서명 패드 초기화
-        function initSignaturePad() {
-            console.log('서명 패드 초기화 시작');
-            
-            const canvas = document.getElementById('signaturePad');
-            if (!canvas) {
-                console.error('서명 패드 캔버스를 찾을 수 없습니다');
-                return;
-            }
-            
-            // SignaturePad 라이브러리 확인
-            if (typeof SignaturePad === 'undefined') {
-                console.error('SignaturePad 라이브러리가 로드되지 않았습니다');
-                showStatus('서명 기능을 로드하는 중 오류가 발생했습니다. 페이지를 새로고침해주세요.', 'error');
-                return;
-            }
-            
-            function resizeCanvas() {
-                const ratio = Math.max(window.devicePixelRatio || 1, 1);
-                const rect = canvas.getBoundingClientRect();
-                canvas.width = rect.width * ratio;
-                canvas.height = rect.height * ratio;
-                canvas.getContext('2d').scale(ratio, ratio);
-                canvas.style.width = rect.width + 'px';
-                canvas.style.height = rect.height + 'px';
-            }
-            
-            resizeCanvas();
-            window.addEventListener('resize', resizeCanvas);
-            
-            try {
-                signaturePad = new SignaturePad(canvas, {
-                    backgroundColor: 'rgba(255,255,255,0)',
-                    penColor: '#ffffff',
-                    minWidth: 1,
-                    maxWidth: 3,
-                    throttle: 16
-                });
-                
-                console.log('서명 패드 초기화 완료');
-            } catch (error) {
-                console.error('서명 패드 초기화 실패:', error);
-                showStatus('서명 기능 초기화에 실패했습니다.', 'error');
-            }
-        }
-        
-        // 상태 메시지 표시
-        function showStatus(message, type = 'info') {
-            const statusEl = document.getElementById('status');
-            statusEl.textContent = message;
-            statusEl.className = `status ${type}`;
-            statusEl.style.display = 'block';
-            
-            if (type === 'success') {
-                setTimeout(() => statusEl.style.display = 'none', 15000);
-            } else if (type === 'error') {
-                setTimeout(() => statusEl.style.display = 'none', 10000);
-            }
-        }
-        
-        // 휴대폰 번호 검증
-        function validatePhone(phone) {
-            const cleanPhone = phone.replace(/\D/g, '');
-            return cleanPhone.length >= 10 && cleanPhone.length <= 11;
-        }
-        
-        // 서명 제출 처리
-        function handleSubmit(e) {
-            e.preventDefault();
-            console.log('서명 제출 시작');
-            
-            // 서명 패드 확인
-            if (!signaturePad) {
-                showStatus('서명 기능이 초기화되지 않았습니다. 페이지를 새로고침해주세요.', 'error');
-                return;
-            }
-            
-            // 서명 확인
-            if (signaturePad.isEmpty()) {
-                alert('서명을 입력해주세요.');
-                return;
-            }
-            
-            // 휴대폰 번호 검증
-            const phoneInput = document.getElementById('phone');
-            if (!validatePhone(phoneInput.value)) {
-                alert('휴대폰 번호를 정확히 입력해주세요. (10-11자리 숫자)');
-                phoneInput.focus();
-                return;
-            }
-            
-            // 필수 필드 확인
-            const name = document.getElementById('name').value.trim();
-            const course = document.getElementById('course').value.trim();
-            const date = document.getElementById('date').value;
-            const phone = phoneInput.value.replace(/\D/g, '');
-            
-            if (!name || !course || !date) {
-                alert('모든 필수 정보를 입력해주세요.');
-                return;
-            }
-            
-            // 동의 확인
-            if (!document.getElementById('agree').checked) {
-                alert('개인정보 수집·이용에 동의해주세요.');
-                return;
-            }
-            
-            // 제출 버튼 비활성화
-            const submitBtn = document.getElementById('submitBtn');
-            submitBtn.disabled = true;
-            submitBtn.textContent = '제출 중...';
-            
-            showStatus('서명을 제출하는 중입니다...', 'info');
-            
-            // 제출 데이터 준비 (이미지 압축)
-            const formData = {
-                name: name,
-                phone: phone,
-                course: course,
-                date: date,
-                memo: getUrlParams().memo || '',
-                signature: signaturePad.toDataURL('image/jpeg', 0.3), // JPEG 30% 품질로 압축
-                submittedAt: new Date().toISOString()
-            };
-            
-            console.log('제출 데이터 준비 완료, 서명 크기:', formData.signature.length);
-            
-            // POST 방식으로 먼저 시도
-            submitViaPost(formData)
-                .then(success => {
-                    if (success) return;
-                    // POST 실패 시 JSONP 방식으로 재시도
-                    console.log('POST 실패, JSONP로 재시도');
-                    return submitViaJsonp(formData);
-                })
-                .then(success => {
-                    if (success) {
-                        showStatus('서명이 성공적으로 제출되었습니다! 5초 후 메인 페이지로 이동합니다.', 'success');
-                        
-                        // 폼 비활성화
-                        document.getElementById('signatureForm').style.pointerEvents = 'none';
-                        document.getElementById('signatureForm').style.opacity = '0.7';
-                        
-                        // 5초 후 메인 페이지로 이동
-                        setTimeout(() => {
-                            window.location.href = 'index.html';
-                        }, 5000);
-                    } else {
-                        throw new Error('모든 제출 방법이 실패했습니다.');
-                    }
-                })
-                .catch(error => {
-                    console.error('서명 제출 실패:', error);
-                    showStatus('서명 제출에 실패했습니다: ' + error.message, 'error');
-                })
-                .finally(() => {
-                    // 제출 버튼 복원
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = '제출하기';
-                });
-        }
-        
-        // POST 방식 제출
-        async function submitViaPost(formData) {
-            try {
-                console.log('POST 방식 제출 시도');
-                
-                const response = await fetch(APPS_SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'cors',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(formData)
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-                
-                const result = await response.json();
-                console.log('POST 응답:', result);
-                
-                if (result.ok) {
-                    return true;
-                } else {
-                    throw new Error(result.error || 'POST 서버 오류');
-                }
-                
-            } catch (error) {
-                console.log('POST 방식 실패:', error);
-                return false;
-            }
-        }
-        
-        // JSONP 방식 제출
-        function submitViaJsonp(formData) {
-            return new Promise((resolve, reject) => {
-                console.log('JSONP 방식 제출 시도');
-                
-                // 서명 데이터 크기 확인
-                if (formData.signature.length > 8000) {
-                    reject(new Error('서명 데이터가 너무 큽니다. 더 간단하게 서명해주세요.'));
-                    return;
-                }
-                
-                const callbackName = 'submitCallback' + Date.now();
-                
-                // 타임아웃 설정
-                const timeoutId = setTimeout(() => {
-                    cleanup();
-                    reject(new Error('서버 응답 시간이 초과되었습니다.'));
-                }, 60000);
-                
-                // 정리 함수
-                function cleanup() {
-                    clearTimeout(timeoutId);
-                    delete window[callbackName];
-                    const script = document.getElementById('jsonp-script');
-                    if (script && script.parentNode) {
-                        document.head.removeChild(script);
-                    }
-                }
-                
-                // 콜백 함수 정의
-                window[callbackName] = function(result) {
-                    console.log('JSONP 응답:', result);
-                    cleanup();
-                    
-                    if (result && result.ok) {
-                        resolve(true);
-                    } else {
-                        reject(new Error(result?.error || 'JSONP 서버 오류'));
-                    }
-                };
-                
-                // JSONP 요청 생성
-                const params = new URLSearchParams({
-                    action: 'submitSignature',
-                    name: formData.name,
-                    phone: formData.phone,
-                    course: formData.course,
-                    date: formData.date,
-                    memo: formData.memo,
-                    signature: formData.signature,
-                    submittedAt: formData.submittedAt,
-                    callback: callbackName,
-                    _t: Date.now()
-                });
-                
-                const script = document.createElement('script');
-                script.id = 'jsonp-script';
-                script.src = `${APPS_SCRIPT_URL}?${params.toString()}`;
-                
-                script.onerror = function() {
-                    cleanup();
-                    reject(new Error('네트워크 연결 오류'));
-                };
-                
-                console.log('JSONP 요청 URL 길이:', script.src.length);
-                document.head.appendChild(script);
-            });
-        }
-        
-        // 페이지 로드 시 초기화
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('서명 페이지 로드 완료');
-            
-            // 파라미터 채우기
-            fillFormFromParams();
-            
-            // 서명 패드 초기화 (약간의 지연 후)
-            setTimeout(() => {
-                initSignaturePad();
-            }, 100);
-            
-            // 이벤트 리스너 등록
-            document.getElementById('clearBtn').addEventListener('click', function() {
-                if (signaturePad) {
-                    signaturePad.clear();
-                }
-            });
-            
-            document.getElementById('signatureForm').addEventListener('submit', handleSubmit);
-            
-            // 페이지를 떠날 때 경고 (서명 중인 경우)
-            window.addEventListener('beforeunload', function(e) {
-                if (signaturePad && !signaturePad.isEmpty()) {
-                    e.preventDefault();
-                    e.returnValue = '';
-                }
-            });
-        });
-    </script>
+  <div class="container">
+    <div class="card">
+      <h1>교육 이수 확인 · 자필 서명</h1>
+      <p class="subtitle">정보를 확인하고 서명해주세요</p>
+
+      <div id="userInfo" class="user-info" style="display:none;">
+        <div class="user-name" id="displayName"></div>
+        <div class="course-name" id="displayCourse"></div>
+      </div>
+
+      <form id="signatureForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="name">이름 *</label>
+            <input type="text" id="name" name="name" readonly>
+          </div>
+          <div class="form-group">
+            <label for="phone">휴대폰 번호 *</label>
+            <input type="tel" id="phone" name="phone" placeholder="010-1234-5678" required>
+            <div class="help-text" style="color:#94a3b8;font-size:14px">숫자만 입력하거나 010-1234-5678 형식</div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="course">교육명 *</label>
+            <input type="text" id="course" name="course" readonly>
+          </div>
+          <div class="form-group">
+            <label for="date">이수일자 *</label>
+            <input type="date" id="date" name="date" required>
+            <div class="help-text" style="color:#94a3b8;font-size:14px">실제 이수한 날짜를 선택해주세요</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>자필 서명 *</label>
+          <canvas id="signaturePad" class="signature-pad"></canvas>
+          <div class="signature-controls">
+            <button type="button" id="clearBtn" class="btn">지우기</button>
+            <span class="help-text" style="color:#94a3b8">마우스나 터치로 서명해주세요</span>
+          </div>
+        </div>
+
+        <div class="checkbox-group">
+          <div class="checkbox-wrapper">
+            <input type="checkbox" id="agree" required>
+            <label for="agree">입력한 정보 및 서명 이미지를 교육 이수 확인 목적으로 수집·보관하는 것에 동의합니다.</label>
+          </div>
+        </div>
+
+        <button type="submit" class="btn primary" id="submitBtn">제출하기</button>
+        <div id="status" class="status"></div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // 👇 새로 배포한 Apps Script WebApp URL
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyW1UrLrRlGQmo7DDFx_vR6P9sarxLem_tYiA6eU_L3FRv2k7TBvTQIqejhD52tul6unQ/exec';
+    let signaturePad=null;
+
+    function getUrlParams(){
+      const p=new URLSearchParams(window.location.search);
+      return {name:p.get('name')||'',course:p.get('course')||'',date:p.get('date')||'',memo:p.get('memo')||'',phone:p.get('phone')||''};
+    }
+    function fillFormFromParams(){
+      const params=getUrlParams();
+      if(params.name){document.getElementById('name').value=params.name;document.getElementById('displayName').textContent=params.name+' 님';document.getElementById('userInfo').style.display='block';}
+      if(params.course){document.getElementById('course').value=params.course;document.getElementById('displayCourse').textContent=params.course;}
+      if(params.phone){document.getElementById('phone').value=params.phone;}
+      document.getElementById('date').value=params.date||new Date().toISOString().split('T')[0];
+    }
+    function initSignaturePad(){
+      const canvas=document.getElementById('signaturePad');
+      function resize(){const r=Math.max(window.devicePixelRatio||1,1);const rect=canvas.getBoundingClientRect();canvas.width=rect.width*r;canvas.height=rect.height*r;canvas.getContext('2d').scale(r,r);canvas.style.width=rect.width+'px';canvas.style.height=rect.height+'px';}
+      resize(); window.addEventListener('resize',resize);
+      signaturePad=new SignaturePad(canvas,{backgroundColor:'rgba(255,255,255,0)',penColor:'#ffffff',minWidth:1,maxWidth:3,throttle:16});
+    }
+    function showStatus(m,t='info'){const el=document.getElementById('status');el.textContent=m;el.className=`status ${t}`;el.style.display='block';if(t!=='info')setTimeout(()=>el.style.display='none',10000);}
+    function validatePhone(p){const c=p.replace(/\D/g,'');return c.length>=10&&c.length<=11;}
+
+    function handleSubmit(e){
+      e.preventDefault();
+      if(!signaturePad||signaturePad.isEmpty()){alert('서명을 입력해주세요.');return;}
+      const phoneInput=document.getElementById('phone');
+      if(!validatePhone(phoneInput.value)){alert('휴대폰 번호를 정확히 입력해주세요.');phoneInput.focus();return;}
+      const name=document.getElementById('name').value.trim();
+      const course=document.getElementById('course').value.trim();
+      const date=document.getElementById('date').value;
+      const phone=phoneInput.value.replace(/\D/g,'');
+      if(!name||!course||!date){alert('모든 필수 정보를 입력해주세요.');return;}
+      if(!document.getElementById('agree').checked){alert('개인정보 수집·이용에 동의해주세요.');return;}
+
+      const submitBtn=document.getElementById('submitBtn'); submitBtn.disabled=true; submitBtn.textContent='제출 중...';
+      showStatus('서명을 제출하는 중입니다...','info');
+
+      const formData={name,phone,course,date,memo:getUrlParams().memo||'',signature:signaturePad.toDataURL('image/jpeg',0.15),submittedAt:new Date().toISOString()};
+      submitViaJsonp(formData).then(ok=>{
+        if(ok){
+          showStatus('서명이 성공적으로 제출되었습니다! 5초 후 메인으로 이동합니다.','success');
+          document.getElementById('signatureForm').style.pointerEvents='none';
+          document.getElementById('signatureForm').style.opacity='.7';
+          setTimeout(()=>location.href='index.html',5000);
+        }else{throw new Error('제출 실패');}
+      }).catch(err=>{
+        console.error(err);showStatus('서명 제출 실패: '+err.message,'error');
+      }).finally(()=>{submitBtn.disabled=false;submitBtn.textContent='제출하기';});
+    }
+
+    function submitViaJsonp(formData){
+      return new Promise((resolve,reject)=>{
+        if(formData.signature.length>8000){reject(new Error('서명 데이터가 너무 큽니다. 더 간단히 서명해주세요.'));return;}
+        const cb='submitCallback_'+Date.now();
+        const to=setTimeout(()=>{cleanup();reject(new Error('서버 응답 시간이 초과되었습니다.'));},60000);
+        function cleanup(){clearTimeout(to);delete window[cb];const s=document.getElementById('jsonp-submit');if(s&&s.parentNode)document.head.removeChild(s);}
+        window[cb]=function(result){cleanup(); if(result&&result.ok){resolve(true);} else {reject(new Error(result?.error||'서버 오류'));}};
+        const params=new URLSearchParams({action:'submitSignature',name:formData.name,phone:formData.phone,course:formData.course,date:formData.date,memo:formData.memo,signature:formData.signature,submittedAt:formData.submittedAt,callback:cb,_t:Date.now()});
+        const script=document.createElement('script'); script.id='jsonp-submit'; script.src=`${APPS_SCRIPT_URL}?${params.toString()}`;
+        script.onerror=function(){cleanup();reject(new Error('네트워크 연결 오류'));};
+        document.head.appendChild(script);
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded',()=>{
+      fillFormFromParams();
+      setTimeout(initSignaturePad,100);
+      document.getElementById('clearBtn').addEventListener('click',()=>signaturePad&&signaturePad.clear());
+      document.getElementById('signatureForm').addEventListener('submit',handleSubmit);
+      window.addEventListener('beforeunload',e=>{if(signaturePad&&!signaturePad.isEmpty()){e.preventDefault();e.returnValue='';}});
+    });
+  </script>
 </body>
 </html>
-
