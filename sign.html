@@ -30,6 +30,8 @@
     .back-link:hover{color:var(--ink);border-color:var(--primary)}
     .user-info{background:#0f1320;padding:16px;border-radius:10px;margin-bottom:24px;border-left:4px solid var(--primary)}
     .user-name{font-size:18px;font-weight:600;color:var(--primary);margin-bottom:4px}.course-name{color:var(--muted);font-size:14px}
+    .course-period{color:var(--success);font-size:14px;margin-top:4px}
+    .help-text{color:var(--muted);font-size:14px;margin-top:4px}
   </style>
 </head>
 <body>
@@ -43,6 +45,7 @@
       <div id="userInfo" class="user-info" style="display:none;">
         <div class="user-name" id="displayName"></div>
         <div class="course-name" id="displayCourse"></div>
+        <div class="course-period" id="displayPeriod"></div>
       </div>
 
       <form id="signatureForm">
@@ -54,7 +57,7 @@
           <div class="form-group">
             <label for="phone">휴대폰 번호 *</label>
             <input type="tel" id="phone" name="phone" placeholder="010-1234-5678" required>
-            <div class="help-text" style="color:#94a3b8;font-size:14px">숫자만 입력하거나 010-1234-5678 형식</div>
+            <div class="help-text">숫자만 입력하거나 010-1234-5678 형식</div>
           </div>
         </div>
 
@@ -64,9 +67,9 @@
             <input type="text" id="course" name="course" readonly>
           </div>
           <div class="form-group">
-            <label for="date">서명일자 *</label>
-            <input type="date" id="date" name="date" required>
-            <div class="help-text" style="color:#94a3b8;font-size:14px">서명하는 날짜를 선택해주세요</div>
+            <label for="completionDate">이수일자 *</label>
+            <input type="date" id="completionDate" name="completionDate" required>
+            <div class="help-text">실제 이수한 날짜를 선택해주세요</div>
           </div>
         </div>
 
@@ -75,7 +78,7 @@
           <canvas id="signaturePad" class="signature-pad"></canvas>
           <div class="signature-controls">
             <button type="button" id="clearBtn" class="btn">지우기</button>
-            <span class="help-text" style="color:#94a3b8">마우스나 터치로 서명해주세요</span>
+            <span class="help-text">마우스나 터치로 서명해주세요</span>
           </div>
         </div>
 
@@ -94,96 +97,175 @@
 
   <script>
     // 👇 새로 배포한 Apps Script WebApp URL
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby5aTrdZ1tUmSZSFkoSeQyDYhEXzngopgIDyPv_4h-dyxQoqqH6uyeUFTBJq7AXxR0G-w/exec';
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyABrgLCJdbnWi9lgjl15zarESDPdkxqTCIwvSwDJyBxAUxjM94TGRr6ZKw7IIJvL7dGA/exec';
     let signaturePad=null;
 
     function getUrlParams(){
       const p=new URLSearchParams(window.location.search);
-      return {name:p.get('name')||'',course:p.get('course')||'',startDate:p.get('startDate')||'',endDate:p.get('endDate')||'',memo:p.get('memo')||'',phone:p.get('phone')||''};
+      return {
+        name:p.get('name')||'',
+        course:p.get('course')||'',
+        startDate:p.get('startDate')||'',
+        endDate:p.get('endDate')||'',
+        memo:p.get('memo')||'',
+        phone:p.get('phone')||''
+      };
     }
+    
     function fillFormFromParams(){
       const params=getUrlParams();
+      
       if(params.name){
         document.getElementById('name').value=params.name;
         document.getElementById('displayName').textContent=params.name+' 님';
         document.getElementById('userInfo').style.display='block';
       }
+      
       if(params.course){
         document.getElementById('course').value=params.course;
         document.getElementById('displayCourse').textContent=params.course;
       }
+      
+      // 교육 기간 표시
+      if(params.startDate && params.endDate){
+        let periodText = '';
+        if(params.startDate === params.endDate){
+          periodText = `교육일자: ${params.startDate}`;
+        } else {
+          periodText = `교육기간: ${params.startDate} ~ ${params.endDate}`;
+        }
+        document.getElementById('displayPeriod').textContent = periodText;
+      }
+      
       if(params.phone){
         document.getElementById('phone').value=params.phone;
       }
-      // 서명일자는 오늘 날짜로 기본 설정, 교육 기간 범위 내에서만 선택 가능
-      const today = new Date().toISOString().split('T')[0];
-      document.getElementById('date').value=today;
       
-      // 교육 기간이 있으면 날짜 입력 범위 제한
-      if(params.startDate && params.endDate){
-        document.getElementById('date').min = params.startDate;
-        document.getElementById('date').max = params.endDate;
-      }
+      // 이수일자는 교육 종료일로 기본 설정하되, 오늘 날짜와 비교해서 더 이른 날짜로 설정
+      const today = new Date().toISOString().split('T')[0];
+      const defaultDate = params.endDate || today;
+      document.getElementById('completionDate').value = defaultDate;
     }
+    
     function initSignaturePad(){
       const canvas=document.getElementById('signaturePad');
-      function resize(){const r=Math.max(window.devicePixelRatio||1,1);const rect=canvas.getBoundingClientRect();canvas.width=rect.width*r;canvas.height=rect.height*r;canvas.getContext('2d').scale(r,r);canvas.style.width=rect.width+'px';canvas.style.height=rect.height+'px';}
-      resize(); window.addEventListener('resize',resize);
-      signaturePad=new SignaturePad(canvas,{backgroundColor:'rgba(255,255,255,0)',penColor:'#ffffff',minWidth:1,maxWidth:3,throttle:16});
+      function resize(){
+        const r=Math.max(window.devicePixelRatio||1,1);
+        const rect=canvas.getBoundingClientRect();
+        canvas.width=rect.width*r;
+        canvas.height=rect.height*r;
+        canvas.getContext('2d').scale(r,r);
+        canvas.style.width=rect.width+'px';
+        canvas.style.height=rect.height+'px';
+      }
+      resize(); 
+      window.addEventListener('resize',resize);
+      signaturePad=new SignaturePad(canvas,{
+        backgroundColor:'rgba(255,255,255,0)',
+        penColor:'#ffffff',
+        minWidth:1,
+        maxWidth:3,
+        throttle:16
+      });
     }
-    function showStatus(m,t='info'){const el=document.getElementById('status');el.textContent=m;el.className=`status ${t}`;el.style.display='block';if(t!=='info')setTimeout(()=>el.style.display='none',10000);}
-    function validatePhone(p){const c=p.replace(/\D/g,'');return c.length>=10&&c.length<=11;}
+    
+    function showStatus(m,t='info'){
+      const el=document.getElementById('status');
+      el.textContent=m;
+      el.className=`status ${t}`;
+      el.style.display='block';
+      if(t!=='info')setTimeout(()=>el.style.display='none',10000);
+    }
+    
+    function validatePhone(p){
+      const c=p.replace(/\D/g,'');
+      return c.length>=10&&c.length<=11;
+    }
 
     function handleSubmit(e){
       e.preventDefault();
-      if(!signaturePad||signaturePad.isEmpty()){alert('서명을 입력해주세요.');return;}
+      if(!signaturePad||signaturePad.isEmpty()){
+        alert('서명을 입력해주세요.');
+        return;
+      }
+      
       const phoneInput=document.getElementById('phone');
-      if(!validatePhone(phoneInput.value)){alert('휴대폰 번호를 정확히 입력해주세요.');phoneInput.focus();return;}
+      if(!validatePhone(phoneInput.value)){
+        alert('휴대폰 번호를 정확히 입력해주세요.');
+        phoneInput.focus();
+        return;
+      }
+      
       const name=document.getElementById('name').value.trim();
       const course=document.getElementById('course').value.trim();
-      const date=document.getElementById('date').value;
+      const completionDate=document.getElementById('completionDate').value;
       const phone=phoneInput.value.replace(/\D/g,'');
-      if(!name||!course||!date){alert('모든 필수 정보를 입력해주세요.');return;}
-      if(!document.getElementById('agree').checked){alert('개인정보 수집·이용에 동의해주세요.');return;}
+      
+      if(!name||!course||!completionDate){
+        alert('모든 필수 정보를 입력해주세요.');
+        return;
+      }
+      
+      if(!document.getElementById('agree').checked){
+        alert('개인정보 수집·이용에 동의해주세요.');
+        return;
+      }
 
-      const submitBtn=document.getElementById('submitBtn'); submitBtn.disabled=true; submitBtn.textContent='제출 중...';
+      const submitBtn=document.getElementById('submitBtn'); 
+      submitBtn.disabled=true; 
+      submitBtn.textContent='제출 중...';
       showStatus('서명을 제출하는 중입니다...','info');
 
-      const formData={name,phone,course,startDate:getUrlParams().startDate||'',endDate:getUrlParams().endDate||'',memo:getUrlParams().memo||'',signature:signaturePad.toDataURL('image/jpeg',0.15),submittedAt:new Date().toISOString()};
+      const formData={
+        name,
+        phone,
+        course,
+        completionDate,
+        memo:getUrlParams().memo||'',
+        signature:signaturePad.toDataURL('image/jpeg',0.15),
+        submittedAt:new Date().toISOString()
+      };
+      
       submitViaJsonp(formData).then(ok=>{
         if(ok){
           showStatus('서명이 성공적으로 제출되었습니다! 5초 후 메인으로 이동합니다.','success');
           document.getElementById('signatureForm').style.pointerEvents='none';
           document.getElementById('signatureForm').style.opacity='.7';
           setTimeout(()=>location.href='index.html',5000);
-        }else{throw new Error('제출 실패');}
+        }else{
+          throw new Error('제출 실패');
+        }
       }).catch(err=>{
-        console.error(err);showStatus('서명 제출 실패: '+err.message,'error');
-      }).finally(()=>{submitBtn.disabled=false;submitBtn.textContent='제출하기';});
+        console.error(err);
+        showStatus('서명 제출 실패: '+err.message,'error');
+      }).finally(()=>{
+        submitBtn.disabled=false;
+        submitBtn.textContent='제출하기';
+      });
     }
 
     function submitViaJsonp(formData){
       return new Promise((resolve,reject)=>{
-        if(formData.signature.length>8000){reject(new Error('서명 데이터가 너무 큽니다. 더 간단히 서명해주세요.'));return;}
+        if(formData.signature.length>8000){
+          reject(new Error('서명 데이터가 너무 큽니다. 더 간단히 서명해주세요.'));
+          return;
+        }
+        
         const cb='submitCallback_'+Date.now();
-        const to=setTimeout(()=>{cleanup();reject(new Error('서버 응답 시간이 초과되었습니다.'));},60000);
-        function cleanup(){clearTimeout(to);delete window[cb];const s=document.getElementById('jsonp-submit');if(s&&s.parentNode)document.head.removeChild(s);}
-        window[cb]=function(result){cleanup(); if(result&&result.ok){resolve(true);} else {reject(new Error(result?.error||'서버 오류'));}};
-        const params=new URLSearchParams({action:'submitSignature',name:formData.name,phone:formData.phone,course:formData.course,startDate:formData.startDate,endDate:formData.endDate,memo:formData.memo,signature:formData.signature,submittedAt:formData.submittedAt,callback:cb,_t:Date.now()});
-        const script=document.createElement('script'); script.id='jsonp-submit'; script.src=`${APPS_SCRIPT_URL}?${params.toString()}`;
-        script.onerror=function(){cleanup();reject(new Error('네트워크 연결 오류'));};
-        document.head.appendChild(script);
-      });
-    }
-
-    document.addEventListener('DOMContentLoaded',()=>{
-      fillFormFromParams();
-      setTimeout(initSignaturePad,100);
-      document.getElementById('clearBtn').addEventListener('click',()=>signaturePad&&signaturePad.clear());
-      document.getElementById('signatureForm').addEventListener('submit',handleSubmit);
-      window.addEventListener('beforeunload',e=>{if(signaturePad&&!signaturePad.isEmpty()){e.preventDefault();e.returnValue='';}});
-    });
-  </script>
-</body>
-</html>
-
+        const to=setTimeout(()=>{
+          cleanup();
+          reject(new Error('서버 응답 시간이 초과되었습니다.'));
+        },60000);
+        
+        function cleanup(){
+          clearTimeout(to);
+          delete window[cb];
+          const s=document.getElementById('jsonp-submit');
+          if(s&&s.parentNode)document.head.removeChild(s);
+        }
+        
+        window[cb]=function(result){
+          cleanup(); 
+          if(result&&result.ok){
+            resolve(true);
+          }
